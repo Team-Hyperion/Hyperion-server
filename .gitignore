@@ -1,0 +1,6 @@
+.vs
+.idea
+Folder.DotSettings.user
+
+out/
+TEST-gtest_results.xml

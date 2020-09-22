@@ -1,0 +1,6 @@
+[submodule "lib/backward-cpp"]
+	path = lib/backward-cpp
+	url = https://github.com/bombela/backward-cpp
+[submodule "lib/StackWalker"]
+	path = lib/StackWalker
+	url = https://github.com/JochenKalmbach/StackWalker
