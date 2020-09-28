@@ -62,6 +62,7 @@ elseif (UNIX)
     set(
 		HYPERION_LINK_LIBS
 
+        pthread
 		${LIBS_COMMON}
 	)
 
