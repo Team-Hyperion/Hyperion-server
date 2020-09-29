@@ -6,5 +6,6 @@
 
 The installation of dependencies listed below is automatic
 
+* [asio](https://github.com/chriskohlhoff/asio)
 * [backward-cpp](https://github.com/bombela/backward-cpp)
 * [StackWalker](https://github.com/JochenKalmbach/StackWalker)

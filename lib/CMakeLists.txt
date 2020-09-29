@@ -25,6 +25,7 @@ endfunction()
 log_msg("Resolving dependencies...")
 validate_dependency(StackWalker)
 validate_dependency(backward-cpp)
+validate_dependency(asio)
 
 
 # Ones which need to be built
@@ -61,6 +62,7 @@ elseif (UNIX)
     set(
 		HYPERION_LINK_LIBS
 
+        pthread
 		${LIBS_COMMON}
 	)
 
@@ -81,6 +83,7 @@ endif (WIN32)
 set(HYPERION_LIB_HEADER_FILES
 	${PROJECT_SOURCE_DIR}/lib/StackWalker/Main
 	${PROJECT_SOURCE_DIR}/lib/backward-cpp
+	${PROJECT_SOURCE_DIR}/lib/asio/asio/include
 )
 # ======================================== END HEADER files .h
 
