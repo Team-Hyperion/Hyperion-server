@@ -62,6 +62,7 @@ set(HYPERION_TEST_DIR ${PROJECT_SOURCE_DIR}/test)
 set(HYPERION_TEST_FILES
 	${HYPERION_TEST_DIR}/core/convertTests.cpp
 	${HYPERION_TEST_DIR}/core/file_systemTests.cpp
+	${HYPERION_TEST_DIR}/core/guarded_dataTests.cpp
 	${HYPERION_TEST_DIR}/core/resource_guardTests.cpp
 	${HYPERION_TEST_DIR}/core/utilityTests.cpp
 )
