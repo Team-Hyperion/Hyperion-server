@@ -14,7 +14,7 @@ namespace hyperion::core
         EXPECT_EQ((*access).first, 12);
 
         access.Get()->GetUnsafe().first = 9;
-        EXPECT_EQ(gd.Read().first, 9);
+        EXPECT_EQ(gd.GetUnsafe().first, 9);
     }
 
     TEST(GuardedData, ConstGuardedAccess) {
@@ -27,13 +27,19 @@ namespace hyperion::core
         EXPECT_EQ(access.Get(), &gd);
     }
 
-    TEST(GuardedData, GetUnsafe) {
+    TEST(GuardedData, Get) {
         GuardedData<int> gd;
 
         auto& x = gd.GetUnsafe();
         x       = 54;
 
-        EXPECT_EQ(gd.Read(), 54);
+        EXPECT_EQ(gd.GetUnsafe(), 54);
+    }
+
+    TEST(GuardedData, ConstGet) {
+        const GuardedData<int> gd;
+
+        EXPECT_EQ(gd.GetUnsafe(), 0);
     }
 
 } // namespace hyperion::core

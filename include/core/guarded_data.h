@@ -27,11 +27,11 @@ namespace hyperion::core
         GuardedData(GuardedData&& other) noexcept = delete;
 
 
-        [[nodiscard]] ValueT& GetUnsafe() {
+        [[nodiscard]] ValueT& GetUnsafe() noexcept {
             return data_;
         }
 
-        [[nodiscard]] const ValueT& Read() const {
+        [[nodiscard]] const ValueT& GetUnsafe() const noexcept {
             return data_;
         }
 
@@ -60,25 +60,25 @@ namespace hyperion::core
         GuardedAccess(GuardedAccess&& other) noexcept = delete;
 
 
-        typename GuardedDataT::ValueT operator*() const {
+        [[nodiscard]] typename GuardedDataT::ValueT operator*() const {
             return guardedData_.data_;
         }
 
 
-        typename GuardedDataT::ValueT* operator->() noexcept {
+        [[nodiscard]] typename GuardedDataT::ValueT* operator->() noexcept {
             return &guardedData_.data_;
         }
 
-        const typename GuardedDataT::ValueT* operator->() const noexcept {
+        [[nodiscard]] const typename GuardedDataT::ValueT* operator->() const noexcept {
             return &guardedData_.data_;
         }
 
 
-        GuardedDataT* Get() noexcept {
+        [[nodiscard]] GuardedDataT* Get() noexcept {
             return &guardedData_;
         }
 
-        const GuardedDataT* Get() const noexcept {
+        [[nodiscard]] const GuardedDataT* Get() const noexcept {
             return &guardedData_;
         }
 
