@@ -43,7 +43,7 @@ void net::ConnectionAcceptor::BeginAsyncAccept() noexcept {
 
 void net::ConnectionAcceptor::DoAsyncAccept() {
     try {
-        acceptor_.async_accept([&](const asio::error_code& error, asio::ip::tcp::socket& socket) {
+        acceptor_.async_accept([&](const asio::error_code& error, asio::ip::tcp::socket socket) {
             HandleAccept(error, socket);
             DoAsyncAccept();
         });
