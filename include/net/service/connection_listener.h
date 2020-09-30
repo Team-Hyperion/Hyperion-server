@@ -1,7 +1,7 @@
 // This file is subject to the terms and conditions defined in 'LICENSE' in the source code package
 
-#ifndef HYPERION_INCLUDE_NET_CONNECTION_LISTENER_H
-#define HYPERION_INCLUDE_NET_CONNECTION_LISTENER_H
+#ifndef HYPERION_INCLUDE_NET_SERVICE_CONNECTION_LISTENER_H
+#define HYPERION_INCLUDE_NET_SERVICE_CONNECTION_LISTENER_H
 #pragma once
 
 namespace hyperion::net
