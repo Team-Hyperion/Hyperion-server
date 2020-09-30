@@ -5,6 +5,8 @@
 #pragma once
 
 #include "core/guarded_data.h"
+
+#include "net/connection.h"
 #include "net/net_prop.h"
 
 namespace hyperion::net
@@ -15,9 +17,16 @@ namespace hyperion::net
     {
 
     public:
-        core::GuardedData<NetProp> netProp;
+        [[nodiscard]] const NetProp& GetNetProp() const {
+            return netProp_;
+        }
+
+        core::GuardedData<std::vector<Connection>> connections;
 
         volatile bool servicesExit = false;
+
+    private:
+        NetProp netProp_;
     };
 
 } // namespace hyperion::net
