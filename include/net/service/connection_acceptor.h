@@ -5,7 +5,7 @@
 #pragma once
 
 #include <asio/ip/tcp.hpp>
-#include <memory>
+#include <optional>
 
 namespace hyperion::net
 {
@@ -42,8 +42,8 @@ namespace hyperion::net
     ///
     /// Blocks until successfully made ConnectionAcceptor or servicesExit is true
     /// \return nullptr if servicesExit is true and no ConnectionAcceptor was successfully made
-    [[nodiscard]] std::unique_ptr<ConnectionAcceptor> MakeConnectionAcceptor(NetData& net_data,
-                                                                             asio::io_context& io_context) noexcept;
+    [[nodiscard]] std::optional<ConnectionAcceptor> MakeConnectionAcceptor(NetData& net_data,
+                                                                           asio::io_context& io_context) noexcept;
 } // namespace hyperion::net
 
 #endif // HYPERION_INCLUDE_NET_SERVICE_CONNECTION_ACCEPTOR_H

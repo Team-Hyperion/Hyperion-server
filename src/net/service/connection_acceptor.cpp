@@ -69,11 +69,11 @@ void net::ConnectionAcceptor::HandleAccept(const asio::error_code& error, asio::
 
 //
 
-std::unique_ptr<net::ConnectionAcceptor> net::MakeConnectionAcceptor(NetData& net_data,
-                                                                     asio::io_context& io_context) noexcept {
+std::optional<net::ConnectionAcceptor> net::MakeConnectionAcceptor(NetData& net_data,
+                                                                   asio::io_context& io_context) noexcept {
     while (!net_data.servicesExit) {
         try {
-            return std::make_unique<ConnectionAcceptor>(io_context, net_data);
+            return std::make_optional<ConnectionAcceptor>(io_context, net_data);
         }
         catch (std::exception& e) {
             LOG_MESSAGE_F(error, "Failed to initialize connection acceptor %s", e.what());
@@ -81,5 +81,5 @@ std::unique_ptr<net::ConnectionAcceptor> net::MakeConnectionAcceptor(NetData& ne
         }
     }
 
-    return nullptr;
+    return std::optional<ConnectionAcceptor>();
 }

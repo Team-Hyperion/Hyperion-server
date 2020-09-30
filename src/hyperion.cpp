@@ -19,6 +19,7 @@ void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data)
 
     // Init all services first to prevent errors between services
     auto conn_acceptor = MakeConnectionAcceptor(net_data, io_context);
+    assert(conn_acceptor.has_value());
 
 
     // Start services
