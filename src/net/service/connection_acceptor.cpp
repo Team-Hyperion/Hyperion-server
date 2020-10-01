@@ -3,13 +3,14 @@
 #include "net/service/connection_acceptor.h"
 
 #include "core/logger.h"
-
+#include "net/greeting.h"
 #include "net/net_data.h"
+#include "net/send.h"
 
 using namespace hyperion;
 
-net::ConnectionAcceptor::ConnectionAcceptor(asio::io_context& io_context, NetData& net_data)
-    : acceptor_(io_context, asio::ip::tcp::endpoint()), netData_(&net_data) {
+net::ConnectionAcceptor::ConnectionAcceptor(asio::io_context& io_context, NetData& net_data, std::string greeting)
+    : acceptor_(io_context, asio::ip::tcp::endpoint()), netData_(&net_data), serverGreeting_(std::move(greeting)) {
 
     assert(netData_ != nullptr);
 
@@ -52,7 +53,7 @@ void net::ConnectionAcceptor::HandleAccept(const asio::error_code& error, asio::
         return;
     }
 
-    socket.send(asio::buffer("Hello from server")); // TODO temp greeting
+    Send(socket, serverGreeting_);
 
     LOG_MESSAGE_F(debug, "Accepted connection %s", socket.remote_endpoint().address().to_string().c_str());
 
@@ -66,7 +67,7 @@ std::optional<net::ConnectionAcceptor> net::MakeConnectionAcceptor(NetData& net_
                                                                    asio::io_context& io_context) noexcept {
     while (!net_data.servicesExit) {
         try {
-            return std::make_optional<ConnectionAcceptor>(io_context, net_data);
+            return std::make_optional<ConnectionAcceptor>(io_context, net_data, MakeServerGreeting());
         }
         catch (std::exception& e) {
             LOG_MESSAGE_F(error, "Failed to initialize connection acceptor %s", e.what());
