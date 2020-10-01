@@ -25,7 +25,6 @@ namespace hyperion::net
         // Amount of time to wait before retrying
 
         std::chrono::milliseconds sleepAcceptorInitFailed{1000};
-        std::chrono::milliseconds sleepAcceptorAcceptClientFailed{10};
     };
 
 } // namespace hyperion::net

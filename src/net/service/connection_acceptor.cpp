@@ -2,8 +2,6 @@
 
 #include "net/service/connection_acceptor.h"
 
-#include <thread>
-
 #include "core/logger.h"
 
 #include "net/net_data.h"
@@ -42,21 +40,16 @@ void net::ConnectionAcceptor::BeginAsyncAccept() noexcept {
 }
 
 void net::ConnectionAcceptor::DoAsyncAccept() {
-    try {
-        acceptor_.async_accept([&](const asio::error_code& error, asio::ip::tcp::socket socket) {
-            HandleAccept(error, socket);
-            DoAsyncAccept();
-        });
-    }
-    catch (std::exception& e) {
-        LOG_MESSAGE_F(error, "Failed to accept client %s", e.what());
-        std::this_thread::sleep_for(netData_->GetNetProp().sleepAcceptorAcceptClientFailed);
-    }
+    acceptor_.async_accept([&](const asio::error_code& error, asio::ip::tcp::socket socket) {
+        DoAsyncAccept();
+        HandleAccept(error, socket);
+    });
 }
 
 void net::ConnectionAcceptor::HandleAccept(const asio::error_code& error, asio::ip::tcp::socket& socket) const {
     if (error) {
-        throw std::runtime_error(error.message().c_str());
+        LOG_MESSAGE_F(error, "Failed to accept client %s", error.message().c_str());
+        return;
     }
 
     socket.send(asio::buffer("Hello from server")); // TODO temp greeting
@@ -77,7 +70,7 @@ std::optional<net::ConnectionAcceptor> net::MakeConnectionAcceptor(NetData& net_
         }
         catch (std::exception& e) {
             LOG_MESSAGE_F(error, "Failed to initialize connection acceptor %s", e.what());
-            std::this_thread::sleep_for(net_data.GetNetProp().sleepAcceptorInitFailed);
+            asio::steady_timer t(io_context, net_data.GetNetProp().sleepAcceptorInitFailed);
         }
     }
 
