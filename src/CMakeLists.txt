@@ -29,11 +29,11 @@ set(HYPERION_SRC_FILES
         
 
         ${HYPERION_DIR}/net/greeting.cpp
+        ${HYPERION_DIR}/net/read.cpp
         ${HYPERION_DIR}/net/send.cpp
 
         ${HYPERION_DIR}/net/service/connection_acceptor.cpp
         ${HYPERION_DIR}/net/service/connection_gc.cpp
-        ${HYPERION_DIR}/net/service/connection_listener.cpp
         )
 # ======================================== END Source files .cpp
 

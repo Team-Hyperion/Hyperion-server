@@ -4,6 +4,8 @@
 #define HYPERION_INCLUDE_NET_NET_DATA_H
 #pragma once
 
+#include <utility>
+
 #include "core/guarded_data.h"
 
 #include "net/connection.h"
@@ -11,6 +13,18 @@
 
 namespace hyperion::net
 {
+    class Connections
+    {
+    public:
+        decltype(auto) Add(Connection::SocketT&& socket) {
+            return connections_.emplace_back(std::move(socket));
+        }
+
+    private:
+        std::vector<Connection> connections_;
+    };
+
+
     ///
     /// Top level connection data, shared across connection services
     class NetData
@@ -21,7 +35,7 @@ namespace hyperion::net
             return netProp_;
         }
 
-        core::GuardedData<std::vector<Connection>> connections;
+        core::GuardedData<Connections> connections;
 
         volatile bool servicesExit = false;
 

@@ -5,6 +5,8 @@
 #pragma once
 
 #include <asio/ip/tcp.hpp>
+#include <asio/streambuf.hpp>
+#include <memory>
 
 namespace hyperion::net
 {
@@ -13,12 +15,17 @@ namespace hyperion::net
     class Connection
     {
     public:
+        /// Bytes
+        static constexpr auto kReceiveBufSize = 1000;
+
         using SocketT = asio::ip::tcp::socket;
 
 
         explicit Connection(SocketT&& socket) : socket(std::move(socket)) {}
 
+
         SocketT socket;
+        std::unique_ptr<asio::streambuf> buf{new asio::streambuf(kReceiveBufSize)};
     };
 
 } // namespace hyperion::net

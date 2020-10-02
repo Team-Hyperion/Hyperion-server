@@ -21,6 +21,8 @@ namespace hyperion::net
         InternetProtocol netProtocol = InternetProtocol::v4;
         unsigned short portNum       = 34200;
 
+        // Timeouts
+        std::chrono::milliseconds toReceiveClientGreeting{5000};
 
         // Amount of time to wait before retrying
 

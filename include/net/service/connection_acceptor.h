@@ -32,6 +32,7 @@ namespace hyperion::net
 
         ///
         /// Called when a connection was accepted
+        /// Sends greeting, returns after receiving greeting from client or timed out
         void HandleAccept(const asio::error_code& error, asio::ip::tcp::socket& socket) const;
 
 

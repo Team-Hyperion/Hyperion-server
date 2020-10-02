@@ -5,6 +5,7 @@
 #include "core/logger.h"
 #include "net/greeting.h"
 #include "net/net_data.h"
+#include "net/read.h"
 #include "net/send.h"
 
 using namespace hyperion;
@@ -57,8 +58,27 @@ void net::ConnectionAcceptor::HandleAccept(const asio::error_code& error, asio::
 
     LOG_MESSAGE_F(debug, "Accepted connection %s", socket.remote_endpoint().address().to_string().c_str());
 
-    core::GuardedAccess access(netData_->connections);
-    access->emplace_back(std::move(socket));
+
+    auto make_connection = [&]() -> Connection& {
+        core::GuardedAccess connections(netData_->connections);
+        return connections->Add(std::move(socket)); // TODO what if it resizes before it is done reading? max clients?
+    };
+    auto& conn = make_connection();
+
+
+    // Get client greeting
+    const auto str = ReadTimed(conn, netData_->GetNetProp().toReceiveClientGreeting);
+
+    if (str.empty()) {
+        // TODO these 2 may throw
+        conn.socket.shutdown(asio::socket_base::shutdown_both);
+        conn.socket.close();
+
+        LOG_MESSAGE_F(debug, "Read client greeting timeout");
+    }
+    else {
+        LOG_MESSAGE_F(debug, "Received client greeting");
+    }
 }
 
 //

@@ -9,7 +9,7 @@
 using namespace hyperion;
 
 void net::Send(asio::ip::tcp::socket& socket, const std::string& message) {
-    assert(*message.end() == CommFormat::kMessageTerminator); // Messages must be terminated
+    assert(message[message.size() - 1] == CommFormat::kMessageTerminator); // Messages must be terminated
 
     socket.send(asio::buffer(message));
 }
