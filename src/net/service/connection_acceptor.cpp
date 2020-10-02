@@ -74,10 +74,10 @@ void net::ConnectionAcceptor::HandleAccept(const asio::error_code& error, asio::
         conn.socket.shutdown(asio::socket_base::shutdown_both);
         conn.socket.close();
 
-        LOG_MESSAGE_F(debug, "Read client greeting timeout");
+        LOG_MESSAGE(debug, "Read client greeting timeout");
     }
     else {
-        LOG_MESSAGE_F(debug, "Received client greeting");
+        LOG_MESSAGE(debug, "Received client greeting");
     }
 }
 
