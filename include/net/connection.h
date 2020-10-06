@@ -5,8 +5,11 @@
 #pragma once
 
 #include <asio/ip/tcp.hpp>
+#include <asio/steady_timer.hpp>
 #include <asio/streambuf.hpp>
-#include <memory>
+#include <functional>
+
+#include "hyperion.h"
 
 namespace hyperion::net
 {
@@ -20,12 +23,41 @@ namespace hyperion::net
 
         using SocketT = asio::ip::tcp::socket;
 
+        enum class Status
+        {
+            awaiting_c_greeting,
+            active // Client greeting received and accepted
+        };
 
-        explicit Connection(SocketT&& socket) : socket(std::move(socket)) {}
 
+        explicit Connection(SocketT&& socket) : socket(std::move(socket)), timer(this->socket.get_executor()) {}
+
+        Connection(const Connection& other)     = delete;
+        Connection(Connection&& other) noexcept = delete;
+
+
+        ///
+        /// Wrapper around asio::async_read_until
+        /// Forwards results to callback
+        void AsyncReadUntil(
+            std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
+
+
+        [[nodiscard]] Status GetStatus() const {
+            return status_;
+        }
+        void SetStatus(const Status status) {
+            this->status_ = status;
+        }
 
         SocketT socket;
-        std::unique_ptr<asio::streambuf> buf{new asio::streambuf(kReceiveBufSize)};
+        asio::streambuf buf{kReceiveBufSize};
+
+        /// Use for timeouts
+        asio::steady_timer timer;
+
+    private:
+        Status status_ = Status::awaiting_c_greeting;
     };
 
 } // namespace hyperion::net

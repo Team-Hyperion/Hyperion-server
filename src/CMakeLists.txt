@@ -28,8 +28,8 @@ set(HYPERION_SRC_FILES
         ${HYPERION_DIR}/core/utility.cpp
         
 
+        ${HYPERION_DIR}/net/connection.cpp
         ${HYPERION_DIR}/net/greeting.cpp
-        ${HYPERION_DIR}/net/read.cpp
         ${HYPERION_DIR}/net/send.cpp
 
         ${HYPERION_DIR}/net/service/connection_acceptor.cpp

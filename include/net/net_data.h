@@ -4,6 +4,7 @@
 #define HYPERION_INCLUDE_NET_NET_DATA_H
 #pragma once
 
+#include <memory>
 #include <utility>
 
 #include "core/guarded_data.h"
@@ -17,11 +18,14 @@ namespace hyperion::net
     {
     public:
         decltype(auto) Add(Connection::SocketT&& socket) {
-            return connections_.emplace_back(std::move(socket));
+            connections_.push_back(std::make_unique<Connection>(std::move(socket)));
+            return connections_[connections_.size() - 1];
         }
 
     private:
-        std::vector<Connection> connections_;
+        // By heap allocating the Connection, the vector can resize without touching the Connection
+        // which is allows for async and threaded actions
+        std::vector<std::unique_ptr<Connection>> connections_;
     };
 
 

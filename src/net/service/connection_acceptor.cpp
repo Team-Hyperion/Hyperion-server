@@ -2,10 +2,10 @@
 
 #include "net/service/connection_acceptor.h"
 
+#include "asio.hpp"
 #include "core/logger.h"
 #include "net/greeting.h"
 #include "net/net_data.h"
-#include "net/read.h"
 #include "net/send.h"
 
 using namespace hyperion;
@@ -54,30 +54,69 @@ void net::ConnectionAcceptor::HandleAccept(const asio::error_code& error, asio::
         return;
     }
 
-    Send(socket, serverGreeting_);
-
-    LOG_MESSAGE_F(debug, "Accepted connection %s", socket.remote_endpoint().address().to_string().c_str());
-
-
     auto make_connection = [&]() -> Connection& {
         core::GuardedAccess connections(netData_->connections);
-        return connections->Add(std::move(socket)); // TODO what if it resizes before it is done reading? max clients?
+        return *connections->Add(std::move(socket));
     };
-    auto& conn = make_connection();
+    auto& conn = make_connection(); // Heap allocated, exists after this method exits
 
+    async_write(conn.socket,
+                asio::buffer(serverGreeting_),
+                [&](const asio::error_code& aw_error, std::size_t /*bytes_transferred*/) {
+                    if (aw_error) {
+                        LOG_MESSAGE_F(error, "Failed send server greeting: %s", aw_error.message().c_str());
+                        return;
+                    }
+
+                    CallbackSentGreeting(conn);
+                });
+}
+
+// Callbacks
+
+void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexcept {
+    LOG_MESSAGE_F(debug, "Accepted connection %s", conn.socket.remote_endpoint().address().to_string().c_str());
 
     // Get client greeting
-    const auto str = ReadTimed(conn, netData_->GetNetProp().toReceiveClientGreeting);
+    conn.AsyncReadUntil([&](const asio::error_code& error, const std::size_t /*bytes_transferred*/) {
+        if (error) {
+            LOG_MESSAGE_F(error, "Failed receiving client greeting: %s", error.message().c_str());
+            return;
+        }
 
-    if (str.empty()) {
-        // TODO these 2 may throw
+        CallbackReceivedGreeting(conn);
+    });
+
+    // Timeout for receiving greeting
+    conn.timer.expires_after(netData_->GetNetProp().toReceiveClientGreeting);
+    conn.timer.async_wait([&](const asio::error_code& error) {
+        if (error) {
+            LOG_MESSAGE_F(error, "Failed client greeting timeout: %s", error.message().c_str());
+            return;
+        }
+
+        CallbackReceiveGreetingTimeout(conn);
+    });
+}
+
+void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn) const noexcept {
+    conn.SetStatus(Connection::Status::active);
+    // TODO parse client greeting
+}
+
+void net::ConnectionAcceptor::CallbackReceiveGreetingTimeout(Connection& conn) const noexcept {
+    if (conn.GetStatus() != Connection::Status::awaiting_c_greeting) {
+        return;
+    }
+
+    LOG_MESSAGE(debug, "Receive client greeting timeout");
+
+    try {
         conn.socket.shutdown(asio::socket_base::shutdown_both);
         conn.socket.close();
-
-        LOG_MESSAGE(debug, "Read client greeting timeout");
     }
-    else {
-        LOG_MESSAGE(debug, "Received client greeting");
+    catch (std::exception& e) {
+        LOG_MESSAGE_F(error, "Failed to close socket: %s", e.what());
     }
 }
 

@@ -9,6 +9,7 @@
 
 namespace hyperion::net
 {
+    class Connection;
     class NetData;
 
     ///
@@ -31,9 +32,22 @@ namespace hyperion::net
         void DoAsyncAccept();
 
         ///
-        /// Called when a connection was accepted
-        /// Sends greeting, returns after receiving greeting from client or timed out
+        /// Sets up callbacks for sending greeting, listening for greeting, timing out greeting listen
         void HandleAccept(const asio::error_code& error, asio::ip::tcp::socket& socket) const;
+
+        // Callbacks used in HandleAccept
+
+        ///
+        /// Server greeting was successfully sent
+        void CallbackSentGreeting(Connection& conn) const noexcept;
+
+        ///
+        /// Client greeting was successfully received
+        void CallbackReceivedGreeting(Connection& conn) const noexcept;
+
+        ///
+        /// Client greeting was NOT successfully received in time
+        void CallbackReceiveGreetingTimeout(Connection& conn) const noexcept;
 
 
         asio::ip::tcp::acceptor acceptor_;
