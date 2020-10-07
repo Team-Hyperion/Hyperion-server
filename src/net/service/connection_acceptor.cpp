@@ -75,13 +75,13 @@ void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexc
     LOG_MESSAGE_F(debug, "Accepted connection %s", conn.socket.remote_endpoint().address().to_string().c_str());
 
     // Get client greeting
-    conn.AsyncReadUntil([&](const asio::error_code& error, const std::size_t /*bytes_transferred*/) {
+    conn.AsyncReadUntil([&](const asio::error_code& error, const std::size_t bytes_transferred) {
         if (error) {
             LOG_MESSAGE_F(error, "Failed receiving client greeting: %s", error.message().c_str());
             return;
         }
 
-        CallbackReceivedGreeting(conn);
+        CallbackReceivedGreeting(conn, bytes_transferred);
     });
 
     // Timeout for receiving greeting
@@ -96,25 +96,28 @@ void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexc
     });
 }
 
-void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn) const noexcept {
+void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn, const std::size_t bytes_transferred) noexcept {
     conn.SetStatus(Connection::Status::active);
-    // TODO parse client greeting
+
+    try {
+        const auto* bytes = asio::buffer_cast<const ByteVector::value_type*>(conn.buf.data());
+        conn.mediaProp    = ParseClientGreeting(bytes, bytes_transferred);
+    }
+    catch (std::exception& e) {
+        LOG_MESSAGE_F(debug, "Failed to parse client provided greeting: %s", e.what());
+
+        conn.End();
+    }
 }
 
-void net::ConnectionAcceptor::CallbackReceiveGreetingTimeout(Connection& conn) const noexcept {
+void net::ConnectionAcceptor::CallbackReceiveGreetingTimeout(Connection& conn) noexcept {
     if (conn.GetStatus() != Connection::Status::awaiting_c_greeting) {
         return;
     }
 
     LOG_MESSAGE(debug, "Receive client greeting timeout");
 
-    try {
-        conn.socket.shutdown(asio::socket_base::shutdown_both);
-        conn.socket.close();
-    }
-    catch (std::exception& e) {
-        LOG_MESSAGE_F(error, "Failed to close socket: %s", e.what());
-    }
+    conn.End();
 }
 
 //

@@ -10,6 +10,7 @@
 #include <functional>
 
 #include "hyperion.h"
+#include "media/media_prop.h"
 #include "net/type_alias.h"
 
 namespace hyperion::net
@@ -38,6 +39,11 @@ namespace hyperion::net
 
 
         ///
+        /// Calls terminate and close on socket
+        /// Connection may not be used after this, a new one must be constructed
+        void End() noexcept;
+
+        ///
         /// Wrapper around asio::async_write
         /// Forwards results to callback
         /// \param msg Ensure lifetime lasts until callback is called
@@ -58,11 +64,15 @@ namespace hyperion::net
             this->status_ = status;
         }
 
+
         SocketT socket;
         asio::streambuf buf{kReceiveBufSize};
 
         /// Use for timeouts
         asio::steady_timer timer;
+
+
+        media::MediaProp mediaProp;
 
     private:
         Status status_ = Status::awaiting_c_greeting;

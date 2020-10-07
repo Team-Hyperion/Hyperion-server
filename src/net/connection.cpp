@@ -9,6 +9,17 @@
 
 using namespace hyperion;
 
+void net::Connection::End() noexcept {
+    try {
+        socket.shutdown(asio::socket_base::shutdown_both);
+        socket.close();
+    }
+    catch (std::exception& e_close) {
+        LOG_MESSAGE_F(error, "Failed to close socket: %s", e_close.what());
+        // TODO how do we clean this up?
+    }
+}
+
 void net::Connection::AsyncWrite(
     const ByteVector& msg,
     std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {

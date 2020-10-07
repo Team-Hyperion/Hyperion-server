@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstdint>
+#include <limits>
 
 namespace hyperion::media
 {
@@ -17,6 +18,8 @@ namespace hyperion::media
     class MediaProp
     {
     public:
+        MediaProp() = default;
+
         MediaProp(const MediaType type, const uint16_t width, const uint16_t height, const uint8_t fps)
             : width(width), height(height), fps(fps), type_(static_cast<decltype(type_)>(type)) {}
 
@@ -29,13 +32,13 @@ namespace hyperion::media
         }
 
 
-        uint16_t width;
-        uint16_t height;
+        uint16_t width  = 0;
+        uint16_t height = 0;
 
-        uint8_t fps;
+        uint8_t fps = 0;
 
     private:
-        uint8_t type_;
+        uint8_t type_ = std::numeric_limits<decltype(type_)>::max();
     };
 
 } // namespace hyperion::media

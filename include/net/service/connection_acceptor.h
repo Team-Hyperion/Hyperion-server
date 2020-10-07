@@ -45,11 +45,11 @@ namespace hyperion::net
 
         ///
         /// Client greeting was successfully received
-        void CallbackReceivedGreeting(Connection& conn) const noexcept;
+        static void CallbackReceivedGreeting(Connection& conn, std::size_t bytes_transferred) noexcept;
 
         ///
         /// Client greeting was NOT successfully received in time
-        void CallbackReceiveGreetingTimeout(Connection& conn) const noexcept;
+        static void CallbackReceiveGreetingTimeout(Connection& conn) noexcept;
 
 
         asio::ip::tcp::acceptor acceptor_;
