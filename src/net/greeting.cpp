@@ -3,16 +3,16 @@
 #include "net/greeting.h"
 
 #include "net/comm_format.h"
+#include "net/type_alias.h"
 
-std::string hyperion::net::MakeServerGreeting() {
-    static_assert(sizeof(std::string::value_type) == 1);
+using namespace hyperion;
 
+net::ByteVector net::MakeServerGreeting() {
+    ByteVector vec;
+    vec.reserve(2);
 
-    std::string str;
-    str.reserve(2);
+    vec.push_back(CommFormat::kServerMsgPrefix);
+    vec.push_back(CommFormat::kMessageTerminator);
 
-    str.push_back(CommFormat::kServerMsgPrefix);
-    str.push_back(CommFormat::kMessageTerminator);
-
-    return str;
+    return vec;
 }

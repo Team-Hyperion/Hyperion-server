@@ -7,6 +7,8 @@
 #include <asio/ip/tcp.hpp>
 #include <optional>
 
+#include "net/type_alias.h"
+
 namespace hyperion::net
 {
     class Connection;
@@ -20,7 +22,7 @@ namespace hyperion::net
         ///
         /// \param greeting Sent to clients when connection is accepted
         /// \exception exception Failed to initialize
-        explicit ConnectionAcceptor(asio::io_context& io_context, NetData& net_data, std::string greeting);
+        explicit ConnectionAcceptor(asio::io_context& io_context, NetData& net_data, ByteVector greeting);
 
         ///
         /// Returns immediately, accepts connections until io_context stops
@@ -53,7 +55,7 @@ namespace hyperion::net
         asio::ip::tcp::acceptor acceptor_;
         NetData* netData_;
 
-        std::string serverGreeting_; // Cached
+        ByteVector serverGreeting_; // Cached
     };
 
 

@@ -6,6 +6,8 @@
 
 #include <string>
 
+#include "net/type_alias.h"
+
 namespace hyperion::net
 {
     // Processes greeting (to / from client)
@@ -14,7 +16,7 @@ namespace hyperion::net
     /// Format as follows:
     ///
     /// 0xFE
-    [[nodiscard]] std::string MakeServerGreeting();
+    [[nodiscard]] ByteVector MakeServerGreeting();
 
 } // namespace hyperion::net
 

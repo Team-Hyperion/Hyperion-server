@@ -6,11 +6,10 @@
 #include "core/logger.h"
 #include "net/greeting.h"
 #include "net/net_data.h"
-#include "net/send.h"
 
 using namespace hyperion;
 
-net::ConnectionAcceptor::ConnectionAcceptor(asio::io_context& io_context, NetData& net_data, std::string greeting)
+net::ConnectionAcceptor::ConnectionAcceptor(asio::io_context& io_context, NetData& net_data, ByteVector greeting)
     : acceptor_(io_context, asio::ip::tcp::endpoint()), netData_(&net_data), serverGreeting_(std::move(greeting)) {
 
     assert(netData_ != nullptr);
@@ -60,16 +59,14 @@ void net::ConnectionAcceptor::HandleAccept(const asio::error_code& error, asio::
     };
     auto& conn = make_connection(); // Heap allocated, exists after this method exits
 
-    async_write(conn.socket,
-                asio::buffer(serverGreeting_),
-                [&](const asio::error_code& aw_error, std::size_t /*bytes_transferred*/) {
-                    if (aw_error) {
-                        LOG_MESSAGE_F(error, "Failed send server greeting: %s", aw_error.message().c_str());
-                        return;
-                    }
+    conn.AsyncWrite(serverGreeting_, [&](const asio::error_code& aw_error, std::size_t /*bytes_transferred*/) {
+        if (aw_error) {
+            LOG_MESSAGE_F(error, "Failed send server greeting: %s", aw_error.message().c_str());
+            return;
+        }
 
-                    CallbackSentGreeting(conn);
-                });
+        CallbackSentGreeting(conn);
+    });
 }
 
 // Callbacks

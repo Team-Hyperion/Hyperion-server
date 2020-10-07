@@ -4,6 +4,8 @@
 #define HYPERION_INCLUDE_NET_COMM_FORMAT_H
 #pragma once
 
+#include "net/type_alias.h"
+
 namespace hyperion::net
 {
     // Defines globals for communication standards
@@ -11,8 +13,8 @@ namespace hyperion::net
     class CommFormat
     {
     public:
-        static constexpr auto kMessageTerminator = '\0';
-        static constexpr char kServerMsgPrefix   = '\xFE';
+        static constexpr ByteVector::value_type kMessageTerminator = '\0';
+        static constexpr ByteVector::value_type kServerMsgPrefix   = '\xFE';
     };
 
 } // namespace hyperion::net

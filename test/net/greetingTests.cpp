@@ -5,7 +5,6 @@
 #include "net/greeting.h"
 
 #include "net/comm_format.h"
-#include "net/send.h"
 
 
 namespace hyperion::net

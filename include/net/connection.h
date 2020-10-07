@@ -10,6 +10,7 @@
 #include <functional>
 
 #include "hyperion.h"
+#include "net/type_alias.h"
 
 namespace hyperion::net
 {
@@ -35,6 +36,13 @@ namespace hyperion::net
         Connection(const Connection& other)     = delete;
         Connection(Connection&& other) noexcept = delete;
 
+
+        ///
+        /// Wrapper around asio::async_write
+        /// Forwards results to callback
+        /// \param msg Ensure lifetime lasts until callback is called
+        void AsyncWrite(const ByteVector& msg,
+                        std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
         ///
         /// Wrapper around asio::async_read_until
