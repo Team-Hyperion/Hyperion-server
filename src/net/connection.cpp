@@ -53,10 +53,13 @@ void net::Connection::AsyncReadUntil(
                 NET_LOG_F(error, "Async read ec: %s", error.message().c_str());
             }
 
-            const auto bytes_transferred_unterminated = bytes_transferred - sizeof CommFormat::kMessageTerminator;
+            auto bytes_transferred_unterminated = static_cast<decltype(bytes_transferred)>(0);
+            if (bytes_transferred > sizeof CommFormat::kMessageTerminator) {
+                bytes_transferred_unterminated = bytes_transferred - sizeof CommFormat::kMessageTerminator;
+            }
 
             LOG_MESSAGE_F(debug,
-                          "Read %lld bytes (with terminator), %lld bytes (without terminator)",
+                          "Read %llu bytes (with terminator), %llu bytes (without terminator)",
                           bytes_transferred,
                           bytes_transferred_unterminated);
 
