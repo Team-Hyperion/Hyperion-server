@@ -10,13 +10,19 @@
 
 using namespace hyperion;
 
+net::Connection::Connection(SocketT&& socket)
+    : id(nextConnectionId_++), socket(std::move(socket)), timer(this->socket.get_executor()) {
+    LOG_MESSAGE_F(
+        info, "Created connection %llu, %s", id, this->socket.remote_endpoint().address().to_string().c_str());
+}
+
 void net::Connection::End() noexcept {
     try {
         if (socket.is_open()) {
             socket.shutdown(asio::socket_base::shutdown_both);
             socket.close();
 
-            LOG_MESSAGE_F(info, "Connection closed");
+            LOG_MESSAGE_F(info, "Connection %llu closed", id);
         }
     }
     catch (std::exception& e_close) {

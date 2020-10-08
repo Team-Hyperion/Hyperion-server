@@ -89,8 +89,6 @@ void net::ConnectionAcceptor::HandleAccept(asio::ip::tcp::socket& socket) const 
 // Callbacks
 
 void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexcept {
-    LOG_MESSAGE_F(info, "Accepted connection %s", conn.socket.remote_endpoint().address().to_string().c_str());
-
     // Get client greeting
     conn.AsyncReadUntil([&](const asio::error_code& error, const std::size_t bytes_transferred) {
         if (error) {
@@ -126,6 +124,8 @@ void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn,
 
         try {
             assert(conn.buf.size() == 0); // Buffer should be empty after finishing acceptance
+
+            LOG_MESSAGE_F(info, "Accepted connection %llu", conn.id);
             onConnectionAccepted(conn);
         }
         catch (std::exception& e) {

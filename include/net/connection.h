@@ -9,7 +9,6 @@
 #include <asio/streambuf.hpp>
 #include <functional>
 
-#include "hyperion.h"
 #include "media/media_prop.h"
 #include "net/type_alias.h"
 
@@ -19,6 +18,10 @@ namespace hyperion::net
     /// A connection with a client
     class Connection
     {
+        using IdT = std::size_t;
+
+        inline static IdT nextConnectionId_ = 1;
+
     public:
         /// Bytes
         static constexpr auto kReceiveBufSize = 1000;
@@ -33,7 +36,7 @@ namespace hyperion::net
         };
 
 
-        explicit Connection(SocketT&& socket) : socket(std::move(socket)), timer(this->socket.get_executor()) {}
+        explicit Connection(SocketT&& socket);
 
         Connection(const Connection& other)     = delete;
         Connection(Connection&& other) noexcept = delete;
@@ -70,6 +73,8 @@ namespace hyperion::net
             this->status_ = status;
         }
 
+
+        const IdT id;
 
         SocketT socket;
         asio::streambuf buf{kReceiveBufSize};

@@ -2,8 +2,8 @@
 
 #include "net/service/connection_listener.h"
 
-#include <cassert>
 #include <asio/error.hpp>
+#include <cassert>
 
 #include "core/resource_guard.h"
 #include "net/connection.h"
@@ -49,7 +49,7 @@ void DoAsyncReceive(net::Connection& conn) {
                 s[i] = bytes[i];
             }
 
-            LOG_MESSAGE_F(debug, "Received %llu bytes, %s", bytes_transferred, s.c_str());
+            LOG_MESSAGE_F(debug, "%llu Received %llu bytes, %s", conn.id, bytes_transferred, s.c_str());
             //
             //
             //
