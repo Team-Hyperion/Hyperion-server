@@ -52,9 +52,15 @@ void net::Connection::AsyncReadUntil(
                 LOG_MESSAGE_F(error, "Error performing async read: %s", error.message().c_str());
             }
 
-            LOG_MESSAGE_F(debug, "Read %lld bytes", bytes_transferred);
+            const auto bytes_transferred_unterminated = bytes_transferred - sizeof CommFormat::kMessageTerminator;
+
+            LOG_MESSAGE_F(debug,
+                          "Read %lld bytes (with terminator), %lld bytes (without terminator)",
+                          bytes_transferred,
+                          bytes_transferred_unterminated);
+
             LOG_MESSAGE_F(debug, "Received %s", asio::buffer_cast<const char*>(buf.data()));
 
-            callback(error, bytes_transferred);
+            callback(error, bytes_transferred_unterminated);
         });
 }

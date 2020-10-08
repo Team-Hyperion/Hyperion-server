@@ -52,7 +52,7 @@ namespace hyperion::net
 
         ///
         /// Wrapper around asio::async_read_until
-        /// Forwards results to callback
+        /// \param callback error: Forwarded, bytes_transferred: Bytes preceding terminator
         void AsyncReadUntil(
             std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
