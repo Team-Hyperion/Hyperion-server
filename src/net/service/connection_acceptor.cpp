@@ -89,12 +89,12 @@ void net::ConnectionAcceptor::HandleAccept(asio::ip::tcp::socket& socket) const 
 // Callbacks
 
 void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexcept {
-    LOG_MESSAGE_F(debug, "Accepted connection %s", conn.socket.remote_endpoint().address().to_string().c_str());
+    LOG_MESSAGE_F(info, "Accepted connection %s", conn.socket.remote_endpoint().address().to_string().c_str());
 
     // Get client greeting
     conn.AsyncReadUntil([&](const asio::error_code& error, const std::size_t bytes_transferred) {
         if (error) {
-            NET_LOG_F(error, "Receiving client greeting gc: %s", error.message().c_str());
+            NET_LOG_F(error, "Receiving client greeting ec: %s", error.message().c_str());
             return;
         }
 
@@ -115,12 +115,24 @@ void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexc
     conn.SetStatus(Connection::Status::awaiting_c_greeting);
 }
 
-void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn, const std::size_t bytes_transferred) noexcept {
+void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn,
+                                                       const std::size_t bytes_transferred) const noexcept {
     try {
         const auto* bytes = asio::buffer_cast<const ByteVector::value_type*>(conn.buf.data());
-        conn.mediaProp    = ParseClientGreeting(bytes, bytes_transferred);
+        conn.mediaProp    = ParseClientGreeting(bytes, Connection::GetBytesUnterminated(bytes_transferred));
+        conn.buf.consume(bytes_transferred);
 
         conn.SetStatus(Connection::Status::active);
+
+        try {
+            assert(conn.buf.size() == 0); // Buffer should be empty after finishing acceptance
+            onConnectionAccepted(conn);
+        }
+        catch (std::exception& e) {
+            LOG_MESSAGE_F(error, "Failed calling callback for connection accepted: %s", e.what());
+
+            conn.End();
+        }
     }
     catch (std::exception& e) {
         LOG_MESSAGE_F(debug, "Failed to parse client provided greeting: %s", e.what());

@@ -12,12 +12,13 @@ using namespace hyperion;
 
 void net::Connection::End() noexcept {
     try {
-        socket.shutdown(asio::socket_base::shutdown_both);
-        socket.close();
+        if (socket.is_open()) {
+            socket.shutdown(asio::socket_base::shutdown_both);
+            socket.close();
+        }
     }
     catch (std::exception& e_close) {
         LOG_MESSAGE_F(error, "Failed to close socket: %s", e_close.what());
-        // TODO how do we clean this up?
     }
 }
 
@@ -43,28 +44,28 @@ void net::Connection::AsyncWrite(
 void net::Connection::AsyncReadUntil(
     std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
 
-    // TODO replace a with static delimiter
     async_read_until(
         socket,
         buf,
-        'a',
+        CommFormat::kMessageTerminator,
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
                 NET_LOG_F(error, "Async read ec: %s", error.message().c_str());
             }
 
-            auto bytes_transferred_unterminated = static_cast<decltype(bytes_transferred)>(0);
-            if (bytes_transferred > sizeof CommFormat::kMessageTerminator) {
-                bytes_transferred_unterminated = bytes_transferred - sizeof CommFormat::kMessageTerminator;
-            }
-
-            LOG_MESSAGE_F(debug,
-                          "Read %llu bytes (with terminator), %llu bytes (without terminator)",
-                          bytes_transferred,
-                          bytes_transferred_unterminated);
+            LOG_MESSAGE_F(debug, "Read %llu bytes (with terminator)", bytes_transferred);
 
             LOG_MESSAGE_F(debug, "Received %s", asio::buffer_cast<const char*>(buf.data()));
 
-            callback(error, bytes_transferred_unterminated);
+            callback(error, bytes_transferred);
         });
+}
+
+std::size_t net::Connection::GetBytesUnterminated(const std::size_t terminated_bytes) noexcept {
+    auto bytes_transferred_unterminated = static_cast<decltype(terminated_bytes)>(0);
+    if (terminated_bytes > sizeof CommFormat::kMessageTerminator) {
+        bytes_transferred_unterminated = terminated_bytes - sizeof CommFormat::kMessageTerminator;
+    }
+
+    return bytes_transferred_unterminated;
 }

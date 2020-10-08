@@ -15,12 +15,43 @@
 
 using namespace hyperion;
 
+void ListenSocket(net::Connection& conn) {
+    assert(conn.buf.size() == 0);
+
+    conn.socket.async_receive( //
+        conn.buf.prepare(conn.buf.max_size()),
+        [&](const asio::error_code& error, const std::size_t bytes_transferred) {
+            if (error) {
+                return;
+            }
+
+            // For testing only
+
+            // This stream is unterminated
+
+            const auto* bytes = asio::buffer_cast<const net::ByteVector::value_type*>(conn.buf.data());
+            std::string s;
+            s.resize(bytes_transferred);
+
+            for (std::size_t i = 0; i < bytes_transferred; ++i) {
+                s[i] = bytes[i];
+            }
+            conn.buf.consume(bytes_transferred);
+
+
+            LOG_MESSAGE_F(debug, "Received %s", s.c_str());
+
+            ListenSocket(conn);
+        });
+}
+
 void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data) {
 
     // Init all services first to prevent errors between services
     auto conn_acceptor = MakeConnectionAcceptor(net_data, io_context);
     assert(conn_acceptor.has_value());
 
+    conn_acceptor->onConnectionAccepted = [](net::Connection& conn) { ListenSocket(conn); };
 
     // Start services
     conn_acceptor->BeginAsyncAccept();

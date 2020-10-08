@@ -40,7 +40,7 @@ namespace hyperion::net
 
 
         ///
-        /// Calls terminate and close on socket
+        /// If socket is open, calls terminate and close on socket
         /// Connection may not be used after this, a new one must be constructed
         void End() noexcept;
 
@@ -53,9 +53,14 @@ namespace hyperion::net
 
         ///
         /// Wrapper around asio::async_read_until
-        /// \param callback error: Forwarded, bytes_transferred: Bytes preceding terminator
+        /// Forwards results to callback
         void AsyncReadUntil(
             std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
+
+
+        ///
+        /// \return Bytes without message terminator, 0 if terminated_bytes < sizeof message terminator
+        static std::size_t GetBytesUnterminated(std::size_t terminated_bytes) noexcept;
 
 
         [[nodiscard]] Status GetStatus() const {

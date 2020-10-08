@@ -4,9 +4,9 @@
 #define HYPERION_INCLUDE_NET_SERVICE_CONNECTION_ACCEPTOR_H
 #pragma once
 
-#include "asio.hpp"
-
+#include <asio/io_context.hpp>
 #include <asio/ip/tcp.hpp>
+#include <functional>
 #include <optional>
 
 #include "net/type_alias.h"
@@ -30,13 +30,20 @@ namespace hyperion::net
         /// Returns immediately, accepts connections until io_context stops
         void BeginAsyncAccept() noexcept;
 
+
+        ///
+        /// Successfully finished acceptance process
+        ///
+        /// Connection& is stored in NetData provided on construction
+        std::function<void(Connection& conn)> onConnectionAccepted;
+
     private:
         ///
         /// Returns immediately, initializes async accept
         void DoAsyncAccept();
 
         ///
-        /// Sets up callbacks for sending greeting, listening for greeting, timing out greeting listen
+        /// Sets up callbacks for sending greeting, listening for greeting
         void HandleAccept(asio::ip::tcp::socket& socket) const;
 
         // Callbacks used in HandleAccept
@@ -47,7 +54,7 @@ namespace hyperion::net
 
         ///
         /// Client greeting was successfully received
-        static void CallbackReceivedGreeting(Connection& conn, std::size_t bytes_transferred) noexcept;
+        void CallbackReceivedGreeting(Connection& conn, std::size_t bytes_transferred) const noexcept;
 
         // Error handling
 
