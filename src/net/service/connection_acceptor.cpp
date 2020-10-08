@@ -91,8 +91,6 @@ void net::ConnectionAcceptor::HandleAccept(asio::ip::tcp::socket& socket) const 
 void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexcept {
     LOG_MESSAGE_F(debug, "Accepted connection %s", conn.socket.remote_endpoint().address().to_string().c_str());
 
-    conn.SetStatus(Connection::Status::awaiting_c_greeting);
-
     // Get client greeting
     conn.AsyncReadUntil([&](const asio::error_code& error, const std::size_t bytes_transferred) {
         if (error) {
@@ -113,14 +111,16 @@ void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexc
 
         CallbackReceiveGreetingTimeout(conn);
     });
+
+    conn.SetStatus(Connection::Status::awaiting_c_greeting);
 }
 
 void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn, const std::size_t bytes_transferred) noexcept {
-    conn.SetStatus(Connection::Status::active);
-
     try {
         const auto* bytes = asio::buffer_cast<const ByteVector::value_type*>(conn.buf.data());
         conn.mediaProp    = ParseClientGreeting(bytes, bytes_transferred);
+
+        conn.SetStatus(Connection::Status::active);
     }
     catch (std::exception& e) {
         LOG_MESSAGE_F(debug, "Failed to parse client provided greeting: %s", e.what());
