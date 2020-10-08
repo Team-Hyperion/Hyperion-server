@@ -4,6 +4,8 @@
 #define HYPERION_INCLUDE_NET_SERVICE_CONNECTION_ACCEPTOR_H
 #pragma once
 
+#include "asio.hpp"
+
 #include <asio/ip/tcp.hpp>
 #include <optional>
 
@@ -35,7 +37,7 @@ namespace hyperion::net
 
         ///
         /// Sets up callbacks for sending greeting, listening for greeting, timing out greeting listen
-        void HandleAccept(const asio::error_code& error, asio::ip::tcp::socket& socket) const;
+        void HandleAccept(asio::ip::tcp::socket& socket) const;
 
         // Callbacks used in HandleAccept
 

@@ -2,10 +2,12 @@
 
 #include "net/service/connection_acceptor.h"
 
-#include "asio.hpp"
+#include <asio/ip/tcp.hpp>
+
 #include "core/logger.h"
 #include "net/greeting.h"
 #include "net/net_data.h"
+#include "net/net_logger.h"
 
 using namespace hyperion;
 
@@ -43,36 +45,40 @@ void net::ConnectionAcceptor::BeginAsyncAccept() noexcept {
 void net::ConnectionAcceptor::DoAsyncAccept() {
     acceptor_.async_accept([&](const asio::error_code& error, asio::ip::tcp::socket socket) {
         DoAsyncAccept();
-        HandleAccept(error, socket);
+
+        if (!error) {
+            HandleAccept(socket);
+        }
+        else {
+            LOG_MESSAGE_F(error, "Failed to accept client %s", error.message().c_str());
+        }
     });
 }
 
-void net::ConnectionAcceptor::HandleAccept(const asio::error_code& error, asio::ip::tcp::socket& socket) const {
-    if (error) {
-        LOG_MESSAGE_F(error, "Failed to accept client %s", error.message().c_str());
-        return;
-    }
-
+void net::ConnectionAcceptor::HandleAccept(asio::ip::tcp::socket& socket) const {
     auto make_connection = [&]() -> Connection& {
         core::GuardedAccess connections(netData_->connections);
         return *connections->Add(std::move(socket));
     };
     auto& conn = make_connection(); // Heap allocated, exists after this method exits
 
-    conn.AsyncWrite(serverGreeting_, [&](const asio::error_code& aw_error, std::size_t /*bytes_transferred*/) {
-        if (aw_error) {
-            LOG_MESSAGE_F(error, "Failed send server greeting: %s", aw_error.message().c_str());
+
+    // Send server greeting
+    conn.AsyncWrite(serverGreeting_, [&](const asio::error_code& error, std::size_t /*bytes_transferred*/) {
+        if (error) {
+
+            NET_LOG_F(error, "Send server greeting ec: %s", error.message().c_str());
             return;
         }
 
         CallbackSentGreeting(conn);
     });
 
-    // Timeout for sending server greeting
+    // Timeout
     conn.timer.expires_after(netData_->GetNetProp().toSendServerGreeting);
-    conn.timer.async_wait([&](const asio::error_code& to_error) {
-        if (to_error) {
-            LOG_MESSAGE_F(error, "Failed server send greeting timeout: %s", to_error.message().c_str());
+    conn.timer.async_wait([&](const asio::error_code& error) {
+        if (error) {
+            NET_LOG_F(error, "Send server greeting timeout ec: %s", error.message().c_str());
             return;
         }
 
@@ -90,18 +96,18 @@ void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexc
     // Get client greeting
     conn.AsyncReadUntil([&](const asio::error_code& error, const std::size_t bytes_transferred) {
         if (error) {
-            LOG_MESSAGE_F(error, "Failed receiving client greeting: %s", error.message().c_str());
+            NET_LOG_F(error, "Receiving client greeting gc: %s", error.message().c_str());
             return;
         }
 
         CallbackReceivedGreeting(conn, bytes_transferred);
     });
 
-    // Timeout for receiving greeting
+    // Timeout
     conn.timer.expires_after(netData_->GetNetProp().toReceiveClientGreeting);
     conn.timer.async_wait([&](const asio::error_code& error) {
         if (error) {
-            LOG_MESSAGE_F(error, "Failed client greeting timeout: %s", error.message().c_str());
+            NET_LOG_F(error, "Received client greeting timeout ec: %s", error.message().c_str());
             return;
         }
 

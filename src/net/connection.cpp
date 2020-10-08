@@ -6,6 +6,7 @@
 #include <asio/write.hpp>
 
 #include "net/comm_format.h"
+#include "net/net_logger.h"
 
 using namespace hyperion;
 
@@ -31,7 +32,7 @@ void net::Connection::AsyncWrite(
         asio::buffer(msg),
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
-                LOG_MESSAGE_F(error, "Failed performing async write: %s", error.message().c_str());
+                NET_LOG_F(error, "Async write ec: %s", error.message().c_str());
                 return;
             }
 
@@ -49,7 +50,7 @@ void net::Connection::AsyncReadUntil(
         'a',
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
-                LOG_MESSAGE_F(error, "Error performing async read: %s", error.message().c_str());
+                NET_LOG_F(error, "Async read ec: %s", error.message().c_str());
             }
 
             const auto bytes_transferred_unterminated = bytes_transferred - sizeof CommFormat::kMessageTerminator;
