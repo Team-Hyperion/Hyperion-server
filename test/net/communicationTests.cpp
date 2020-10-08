@@ -2,22 +2,22 @@
 
 #include <gtest/gtest.h>
 
-#include "net/greeting.h"
+#include "net/communication.h"
 
 #include "net/comm_format.h"
 
 namespace hyperion::net
 {
-    TEST(Greeting, MakeServer) {
+    TEST(Communication, MakeServerGreeting) {
         const auto greeting = MakeServerGreeting();
 
         ASSERT_EQ(greeting.size(), 2);
 
         EXPECT_EQ(greeting[0], CommFormat::kServerMsgPrefix);
-        EXPECT_EQ(greeting[1], CommFormat::kMessageTerminator);
+        EXPECT_EQ(greeting[2], CommFormat::kMessageTerminator);
     }
 
-    TEST(Greeting, ParseClient) {
+    TEST(Communication, ParseClientGreeting) {
         // 1-Video, 2-1920, 2-1080, 1-60
         ByteVector bytes = {0x01, 0x07, 0x80, 0x04, 0x38, 0x3C};
         const auto props = ParseClientGreeting(bytes.data(), bytes.size());
@@ -28,7 +28,7 @@ namespace hyperion::net
         EXPECT_EQ(props.fps, 60);
     }
 
-    TEST(Greeting, ParseClientTooFewBytes) {
+    TEST(Communication, ParseClientGreetingTooFewBytes) {
         try {
             auto props = ParseClientGreeting({1});
             FAIL();
@@ -37,7 +37,7 @@ namespace hyperion::net
         }
     }
 
-    TEST(Greeting, ParseClientTooManyBytes) {
+    TEST(Communication, ParseClientGreetingTooManyBytes) {
         // Ok, just ignore the excess
 
         // 1-Image, 2-720, 2-480, 1-30

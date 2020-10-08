@@ -1,7 +1,7 @@
 // This file is subject to the terms and conditions defined in 'LICENSE' in the source code package
 
-#ifndef HYPERION_INCLUDE_NET_GREETING_H
-#define HYPERION_INCLUDE_NET_GREETING_H
+#ifndef HYPERION_INCLUDE_NET_PROCESS_BYTES_H
+#define HYPERION_INCLUDE_NET_PROCESS_BYTES_H
 #pragma once
 
 #include "media/media_prop.h"
@@ -9,18 +9,16 @@
 
 namespace hyperion::net
 {
-    // Processes greeting (to / from client)
+    // Processes bytes that are (to / from client)
 
     ///
-    /// Information for identifying server with client
-    ///
     /// Format:
-    /// 0xFE <Terminator>
+    /// <Prefix> <Terminator>
     [[nodiscard]] ByteVector MakeServerGreeting();
 
 
     ///
-    /// Parse information for identifying client
+    /// Parses to media::MediaProp
     ///
     /// Format:
     /// <Media_type> <Media_width> <Media_height> <Media_fps>
@@ -33,4 +31,4 @@ namespace hyperion::net
     [[nodiscard]] media::MediaProp ParseClientGreeting(const ByteVector& b_vec);
 } // namespace hyperion::net
 
-#endif // HYPERION_INCLUDE_NET_GREETING_H
+#endif // HYPERION_INCLUDE_NET_PROCESS_BYTES_H

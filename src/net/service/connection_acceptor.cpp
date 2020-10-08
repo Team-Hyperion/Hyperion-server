@@ -5,9 +5,9 @@
 #include <asio/ip/tcp.hpp>
 
 #include "core/logger.h"
-#include "net/greeting.h"
+#include "net/communication.h"
+#include "net/logger.h"
 #include "net/net_data.h"
-#include "net/net_logger.h"
 
 using namespace hyperion;
 

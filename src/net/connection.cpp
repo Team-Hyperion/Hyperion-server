@@ -6,7 +6,7 @@
 #include <asio/write.hpp>
 
 #include "net/comm_format.h"
-#include "net/net_logger.h"
+#include "net/logger.h"
 
 using namespace hyperion;
 

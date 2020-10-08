@@ -1,7 +1,7 @@
 // This file is subject to the terms and conditions defined in 'LICENSE' in the source code package
 
-#ifndef HYPERION_INCLUDE_NET_NET_LOGGER_H
-#define HYPERION_INCLUDE_NET_NET_LOGGER_H
+#ifndef HYPERION_INCLUDE_NET_LOGGER_H
+#define HYPERION_INCLUDE_NET_LOGGER_H
 #pragma once
 
 #include <asio/error.hpp>
@@ -33,4 +33,4 @@
     static_assert(true)
 
 
-#endif // HYPERION_INCLUDE_NET_NET_LOGGER_H
+#endif // HYPERION_INCLUDE_NET_LOGGER_H

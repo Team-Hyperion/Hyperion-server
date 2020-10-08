@@ -29,7 +29,7 @@ set(HYPERION_SRC_FILES
         
 
         ${HYPERION_DIR}/net/connection.cpp
-        ${HYPERION_DIR}/net/greeting.cpp
+        ${HYPERION_DIR}/net/communication.cpp
 
         ${HYPERION_DIR}/net/service/connection_acceptor.cpp
         ${HYPERION_DIR}/net/service/connection_gc.cpp
