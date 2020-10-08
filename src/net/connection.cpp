@@ -15,6 +15,8 @@ void net::Connection::End() noexcept {
         if (socket.is_open()) {
             socket.shutdown(asio::socket_base::shutdown_both);
             socket.close();
+
+            LOG_MESSAGE_F(info, "Connection closed");
         }
     }
     catch (std::exception& e_close) {
