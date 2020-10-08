@@ -67,12 +67,25 @@ void net::ConnectionAcceptor::HandleAccept(const asio::error_code& error, asio::
 
         CallbackSentGreeting(conn);
     });
+
+    // Timeout for sending server greeting
+    conn.timer.expires_after(netData_->GetNetProp().toSendServerGreeting);
+    conn.timer.async_wait([&](const asio::error_code& to_error) {
+        if (to_error) {
+            LOG_MESSAGE_F(error, "Failed server send greeting timeout: %s", to_error.message().c_str());
+            return;
+        }
+
+        CallbackSendGreetingTimeout(conn);
+    });
 }
 
 // Callbacks
 
 void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexcept {
     LOG_MESSAGE_F(debug, "Accepted connection %s", conn.socket.remote_endpoint().address().to_string().c_str());
+
+    conn.SetStatus(Connection::Status::awaiting_c_greeting);
 
     // Get client greeting
     conn.AsyncReadUntil([&](const asio::error_code& error, const std::size_t bytes_transferred) {
@@ -110,7 +123,19 @@ void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn, const s
     }
 }
 
+void net::ConnectionAcceptor::CallbackSendGreetingTimeout(Connection& conn) noexcept {
+    if (conn.GetStatus() != Connection::Status::send_s_greeting) {
+        return;
+    }
+
+    LOG_MESSAGE(debug, "Send client greeting timeout");
+
+    conn.End();
+}
+
 void net::ConnectionAcceptor::CallbackReceiveGreetingTimeout(Connection& conn) noexcept {
+    assert(conn.GetStatus() != Connection::Status::send_s_greeting); // Server greeting should have been send first
+
     if (conn.GetStatus() != Connection::Status::awaiting_c_greeting) {
         return;
     }

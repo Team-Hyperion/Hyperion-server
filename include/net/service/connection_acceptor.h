@@ -47,6 +47,12 @@ namespace hyperion::net
         /// Client greeting was successfully received
         static void CallbackReceivedGreeting(Connection& conn, std::size_t bytes_transferred) noexcept;
 
+        // Error handling
+
+        ///
+        /// Server greeting was NOT successfully sent in time
+        static void CallbackSendGreetingTimeout(Connection& conn) noexcept;
+
         ///
         /// Client greeting was NOT successfully received in time
         static void CallbackReceiveGreetingTimeout(Connection& conn) noexcept;

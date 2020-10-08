@@ -27,6 +27,7 @@ namespace hyperion::net
 
         enum class Status
         {
+            send_s_greeting,
             awaiting_c_greeting,
             active // Client greeting received and accepted
         };
@@ -75,7 +76,7 @@ namespace hyperion::net
         media::MediaProp mediaProp;
 
     private:
-        Status status_ = Status::awaiting_c_greeting;
+        Status status_ = Status::send_s_greeting;
     };
 
 } // namespace hyperion::net
