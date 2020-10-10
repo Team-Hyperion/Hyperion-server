@@ -28,6 +28,15 @@ namespace hyperion::net
         EXPECT_EQ(props.fps, 60);
     }
 
+    TEST(Communication, ParseClientGreetingInvalidMediaType) {
+        try {
+            auto props = ParseClientGreeting({0x03, 1, 1, 1, 1, 1});
+            FAIL();
+        }
+        catch (std::exception&) {
+        }
+    }
+
     TEST(Communication, ParseClientGreetingTooFewBytes) {
         try {
             auto props = ParseClientGreeting({1});

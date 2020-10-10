@@ -31,7 +31,12 @@ media::MediaProp net::ParseClientGreeting(const ByteVector::value_type* ptr, con
 
 
     static_assert(sizeof(media::MediaProp) == 1 + 2 + 2 + 1);
-    const uint8_t type    = get_byte();
+
+    const uint8_t type = get_byte();
+    if (type >= static_cast<uint8_t>(media::MediaType::count_)) {
+        throw std::runtime_error("Invalid media type");
+    }
+
     const uint16_t width  = get_byte_2();
     const uint16_t height = get_byte_2();
     const uint8_t fps     = get_byte();

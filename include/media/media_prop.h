@@ -13,6 +13,7 @@ namespace hyperion::media
     {
         image = 0,
         video,
+        count_
     };
 
     class MediaProp
