@@ -17,7 +17,9 @@ net::ByteVector net::MakeServerGreeting() {
     return vec;
 }
 
-media::MediaProp net::ParseClientGreeting(const ByteVector::value_type* ptr, const std::size_t size) {
+media::MediaProp net::ParseClientGreeting(const std::vector<media::MediaDimension>& allowed_dimensions,
+                                          const ByteVector::value_type* ptr,
+                                          const std::size_t size) {
     if (size < sizeof(media::MediaProp)) {
         throw ParseGreetingError("Too few input bytes");
     }
@@ -39,9 +41,15 @@ media::MediaProp net::ParseClientGreeting(const ByteVector::value_type* ptr, con
     const uint16_t height = get_byte_2();
     const uint8_t fps     = get_byte();
 
+    if (std::find(allowed_dimensions.begin(), allowed_dimensions.end(), media::MediaDimension(width, height)) ==
+        allowed_dimensions.end()) {
+        throw ParseGreetingError("Unsupported media dimension");
+    }
+
     return {static_cast<media::MediaType>(type), width, height, fps};
 }
 
-media::MediaProp net::ParseClientGreeting(const ByteVector& b_vec) {
-    return ParseClientGreeting(b_vec.data(), b_vec.size());
+media::MediaProp net::ParseClientGreeting(const std::vector<media::MediaDimension>& allowed_dimensions,
+                                          const ByteVector& b_vec) {
+    return ParseClientGreeting(allowed_dimensions, b_vec.data(), b_vec.size());
 }

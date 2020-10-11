@@ -33,10 +33,17 @@ namespace hyperion::net
     /// Top level connection data, shared across connection services
     class NetData
     {
-
     public:
+        NetData(NetProp net_prop, std::vector<media::MediaDimension> allowed_dimensions)
+            : netProp_(std::move(net_prop)), allowedDimensions_(std::move(allowed_dimensions)) {}
+
+
         [[nodiscard]] const NetProp& GetNetProp() const {
             return netProp_;
+        }
+
+        [[nodiscard]] auto& GetAllowedMediaDim() const {
+            return allowedDimensions_;
         }
 
         core::GuardedData<Connections> connections;
@@ -45,6 +52,8 @@ namespace hyperion::net
 
     private:
         NetProp netProp_;
+
+        std::vector<media::MediaDimension> allowedDimensions_;
     };
 
 } // namespace hyperion::net

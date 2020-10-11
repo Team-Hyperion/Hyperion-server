@@ -5,6 +5,7 @@
 #include <asio/ip/tcp.hpp>
 
 #include "core/logger.h"
+#include "core/resource_guard.h"
 #include "net/communication.h"
 #include "net/logger.h"
 #include "net/net_data.h"
@@ -116,9 +117,12 @@ void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexc
 void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn,
                                                        const std::size_t bytes_transferred) const noexcept {
     try {
+        core::CapturingGuard<void()> guard([&]() { conn.buf.consume(bytes_transferred); });
         const auto* bytes = asio::buffer_cast<const ByteVector::value_type*>(conn.buf.data());
-        conn.mediaProp    = ParseClientGreeting(bytes, Connection::GetBytesUnterminated(bytes_transferred));
-        conn.buf.consume(bytes_transferred);
+
+        conn.mediaProp = ParseClientGreeting(
+            netData_->GetAllowedMediaDim(), bytes, Connection::GetBytesUnterminated(bytes_transferred));
+
 
         conn.SetStatus(Connection::Status::active);
 

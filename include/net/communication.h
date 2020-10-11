@@ -32,11 +32,18 @@ namespace hyperion::net
     /// <Media_type> <Media_width> <Media_height> <Media_fps>
     /// Bytes: 1, 2, 2, 1
     ///
+    /// \param allowed_dimensions Throws ParseGreetingError if does not match dimension in this vector
+    /// \param ptr Pointer to bytes
+    /// \param size Number of bytes
+    ///
     /// \exception ParseGreetingError Invalid number of bytes, or byte contents were invalid
-    [[nodiscard]] media::MediaProp ParseClientGreeting(const ByteVector::value_type* ptr, std::size_t size);
+    [[nodiscard]] media::MediaProp ParseClientGreeting(const std::vector<media::MediaDimension>& allowed_dimensions,
+                                                       const ByteVector::value_type* ptr,
+                                                       std::size_t size);
 
     // See above
-    [[nodiscard]] media::MediaProp ParseClientGreeting(const ByteVector& b_vec);
+    [[nodiscard]] media::MediaProp ParseClientGreeting(const std::vector<media::MediaDimension>& allowed_dimensions,
+                                                       const ByteVector& b_vec);
 } // namespace hyperion::net
 
 #endif // HYPERION_INCLUDE_NET_PROCESS_BYTES_H
