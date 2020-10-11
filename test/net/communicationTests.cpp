@@ -9,7 +9,31 @@
 
 namespace hyperion::net
 {
-    TEST(Communication, MakeServerGreeting) {
+    class CommunicationTest : public testing::Test
+    {
+    protected:
+        [[nodiscard]] static ByteVector MakeClientGreeting(media::MediaType media_type,
+                                                           const uint16_t width,
+                                                           const uint16_t height,
+                                                           const uint8_t fps) {
+            ByteVector v;
+            v.reserve(6);
+            v.push_back(static_cast<uint8_t>(media_type));
+
+            v.push_back(static_cast<uint8_t>(width >> 8));
+            v.push_back(static_cast<uint8_t>(width << 8 >> 8));
+
+            v.push_back(static_cast<uint8_t>(height >> 8));
+            v.push_back(static_cast<uint8_t>(height << 8 >> 8));
+
+            v.push_back(fps);
+
+            return v;
+        }
+    };
+
+
+    TEST_F(CommunicationTest, MakeServerGreeting) {
         const auto greeting = MakeServerGreeting();
 
         ASSERT_EQ(greeting.size(), 1);
@@ -17,9 +41,9 @@ namespace hyperion::net
         EXPECT_EQ(greeting[0], CommFormat::kServerMsgPrefix);
     }
 
-    TEST(Communication, ParseClientGreeting) {
-        // 1-Video, 2-1920, 2-1080, 1-60
-        ByteVector bytes = {0x01, 0x07, 0x80, 0x04, 0x38, 0x3C};
+
+    TEST_F(CommunicationTest, ParseClientGreeting) {
+        auto bytes       = MakeClientGreeting(media::MediaType::video, 1920, 1080, 60);
         const auto props = ParseClientGreeting({{{1920, 1080}}, 60}, bytes.data(), bytes.size());
 
         EXPECT_EQ(props.GetType(), media::MediaType::video);
@@ -28,46 +52,68 @@ namespace hyperion::net
         EXPECT_EQ(props.fps, 60);
     }
 
-    TEST(Communication, ParseClientGreetingInvalidMediaType) {
-        try {
-            // 1-???, 2-1920, 2-1080
-            auto props = ParseClientGreeting({{{1920, 1080}}, 60}, {0x03, 0x07, 0x80, 0x04, 0x38, 1});
-            FAIL();
-        }
-        catch (ParseGreetingError&) {
-        }
-    }
-
-    TEST(Communication, ParseClientGreetingInvalidDimension) {
-        try {
-            // 1-Image 2-1921, 2-1080
-            auto props = ParseClientGreeting({{{1920, 1080}}, 60}, {0x00, 0x07, 0x81, 0x04, 0x38, 1});
-            FAIL();
-        }
-        catch (ParseGreetingError&) {
-        }
-    }
-
-    TEST(Communication, ParseClientGreetingLowerFps) {
-        auto parse = [](const uint8_t media_type_byte, const media::MediaType media_type_literal) {
-            // 1-Video, 2-100, 2-101, 1-29
-            const auto props = ParseClientGreeting({{{100, 101}}, 30}, {media_type_byte, 0x00, 0x64, 0x00, 0x65, 0x1D});
-
-            EXPECT_EQ(props.GetType(), media_type_literal);
-            EXPECT_EQ(props.width, 100);
-            EXPECT_EQ(props.height, 101);
-            EXPECT_EQ(props.fps, 29);
+    TEST_F(CommunicationTest, ParseClientGreetingInvalidMediaType) {
+        auto parse = [](uint8_t invalid_media_type) {
+            try {
+                auto props = ParseClientGreeting(
+                    {{{1920, 1080}}, 60},
+                    MakeClientGreeting(static_cast<media::MediaType>(invalid_media_type), 1920, 1080, 60));
+                FAIL();
+            }
+            catch (ParseGreetingError&) {
+            }
         };
 
-        parse(0x00, media::MediaType::image);
-        parse(0x01, media::MediaType::video);
+        parse(3);
+        parse(10);
+        parse(30);
+        parse(255);
     }
 
-    TEST(Communication, ParseClientGreetingGreaterFps) {
-        auto parse = [](const uint8_t media_type) {
+    TEST_F(CommunicationTest, ParseClientGreetingInvalidDimension) {
+        auto parse = [](std::vector<media::MediaDimension> allowed, const uint16_t width, const uint16_t height) {
             try {
-                // 1-, 2-1920, 2-1080, 1-61
-                auto props = ParseClientGreeting({{{1920, 1080}}, 60}, {media_type, 0x07, 0x80, 0x04, 0x38, 0x3D});
+                auto props = ParseClientGreeting({std::move(allowed), 30},
+                                                 MakeClientGreeting(media::MediaType::image, width, height, 30));
+                FAIL();
+            }
+            catch (ParseGreetingError&) {
+            }
+        };
+
+        parse({}, 0, 0);
+
+        parse({{1920, 1080}}, 1921, 1080);
+        parse({{1920, 1080}}, 1920, 1081);
+
+        parse({{1, 2}, {3, 4}}, 2, 1);
+        parse({{1, 2}, {3, 4}}, 4, 3);
+    }
+
+    TEST_F(CommunicationTest, ParseClientGreetingValidFps) {
+        auto parse = [](const media::MediaType media_type, const uint8_t fps) {
+            const auto props = ParseClientGreeting({{{100, 101}}, 30}, MakeClientGreeting(media_type, 100, 101, fps));
+
+            EXPECT_EQ(props.GetType(), media_type);
+            EXPECT_EQ(props.width, 100);
+            EXPECT_EQ(props.height, 101);
+            EXPECT_EQ(props.fps, fps);
+        };
+
+        parse(media::MediaType::image, 1);
+        parse(media::MediaType::video, 1);
+
+        parse(media::MediaType::image, 10);
+        parse(media::MediaType::video, 10);
+
+        parse(media::MediaType::image, 30);
+        parse(media::MediaType::video, 30);
+    }
+
+    TEST_F(CommunicationTest, ParseClientGreetingInvalidFps) {
+        auto parse = [](const media::MediaType media_type, const uint8_t fps) {
+            try {
+                auto props = ParseClientGreeting({{{100, 101}}, 30}, MakeClientGreeting(media_type, 100, 101, fps));
                 return true;
             }
             catch (ParseGreetingError&) {
@@ -75,11 +121,14 @@ namespace hyperion::net
             }
         };
 
-        EXPECT_TRUE(parse(0));  // Max fps ignored for images
-        EXPECT_FALSE(parse(1)); // Max fps enforced for videos
+        EXPECT_TRUE(parse(media::MediaType::image, 1));
+        EXPECT_TRUE(parse(media::MediaType::video, 1));
+
+        EXPECT_TRUE(parse(media::MediaType::image, 31));  // Max fps ignored for images
+        EXPECT_FALSE(parse(media::MediaType::video, 31)); // Max fps enforced for videos
     }
 
-    TEST(Communication, ParseClientGreetingTooFewBytes) {
+    TEST_F(CommunicationTest, ParseClientGreetingTooFewBytes) {
         try {
             auto props = ParseClientGreeting({{{1920, 1080}}, 60}, {1});
             FAIL();
@@ -88,7 +137,7 @@ namespace hyperion::net
         }
     }
 
-    TEST(Communication, ParseClientGreetingTooManyBytes) {
+    TEST_F(CommunicationTest, ParseClientGreetingTooManyBytes) {
         // Ok, just ignore the excess
 
         // 1-Image, 2-720, 2-480, 1-30
