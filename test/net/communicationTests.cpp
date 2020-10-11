@@ -11,10 +11,9 @@ namespace hyperion::net
     TEST(Communication, MakeServerGreeting) {
         const auto greeting = MakeServerGreeting();
 
-        ASSERT_EQ(greeting.size(), 2);
+        ASSERT_EQ(greeting.size(), 1);
 
         EXPECT_EQ(greeting[0], CommFormat::kServerMsgPrefix);
-        EXPECT_EQ(greeting[1], CommFormat::kMessageTerminator);
     }
 
     TEST(Communication, ParseClientGreeting) {

@@ -90,28 +90,35 @@ void net::ConnectionAcceptor::HandleAccept(asio::ip::tcp::socket& socket) const 
 // Callbacks
 
 void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexcept {
-    // Get client greeting
-    conn.AsyncReadUntil([&](const asio::error_code& error, const std::size_t bytes_transferred) {
-        if (error) {
-            NET_LOG_F(error, "Receiving client greeting ec: %s", error.message().c_str());
-            return;
-        }
+    try {
+        // Get client greeting
+        conn.AsyncRead(kParseClientGreetingBytes,
+                       [&](const asio::error_code& error, const std::size_t bytes_transferred) {
+                           if (error) {
+                               NET_LOG_F(error, "Receiving client greeting ec: %s", error.message().c_str());
+                               return;
+                           }
 
-        CallbackReceivedGreeting(conn, bytes_transferred);
-    });
+                           CallbackReceivedGreeting(conn, bytes_transferred);
+                       });
 
-    // Timeout
-    conn.timer.expires_after(netData_->GetNetProp().toReceiveClientGreeting);
-    conn.timer.async_wait([&](const asio::error_code& error) {
-        if (error) {
-            NET_LOG_F(error, "Received client greeting timeout ec: %s", error.message().c_str());
-            return;
-        }
+        // Timeout
+        conn.timer.expires_after(netData_->GetNetProp().toReceiveClientGreeting);
+        conn.timer.async_wait([&](const asio::error_code& error) {
+            if (error) {
+                NET_LOG_F(error, "Received client greeting timeout ec: %s", error.message().c_str());
+                return;
+            }
 
-        CallbackReceiveGreetingTimeout(conn);
-    });
+            CallbackReceiveGreetingTimeout(conn);
+        });
 
-    conn.SetStatus(Connection::Status::awaiting_c_greeting);
+        conn.SetStatus(Connection::Status::awaiting_c_greeting);
+    }
+    catch (std::exception& e) {
+        LOG_MESSAGE_F(error, "Callback sent greeting: %s", e.what());
+        conn.End();
+    }
 }
 
 void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn,
@@ -120,8 +127,7 @@ void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn,
         core::CapturingGuard<void()> guard([&]() { conn.buf.consume(bytes_transferred); });
         const auto* bytes = asio::buffer_cast<const ByteVector::value_type*>(conn.buf.data());
 
-        conn.mediaProp = ParseClientGreeting(
-            netData_->GetAllowedMediaDim(), bytes, Connection::GetBytesUnterminated(bytes_transferred));
+        conn.mediaProp = ParseClientGreeting(netData_->GetAllowedMediaDim(), bytes, bytes_transferred);
 
 
         conn.SetStatus(Connection::Status::active);

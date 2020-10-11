@@ -13,8 +13,7 @@ namespace hyperion::net
     class CommFormat
     {
     public:
-        static constexpr ByteVector::value_type kMessageTerminator = '\0';
-        static constexpr ByteVector::value_type kServerMsgPrefix   = '\xFE';
+        static constexpr ByteVector::value_type kServerMsgPrefix = '\xFE';
     };
 
 } // namespace hyperion::net

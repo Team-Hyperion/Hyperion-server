@@ -2,7 +2,7 @@
 
 #include "net/connection.h"
 
-#include <asio/read_until.hpp>
+#include <asio/read.hpp>
 #include <asio/write.hpp>
 
 #include "net/comm_format.h"
@@ -34,8 +34,6 @@ void net::Connection::AsyncWrite(
     const ByteVector& msg,
     std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
 
-    assert(msg[msg.size() - 1] == CommFormat::kMessageTerminator); // Messages must be terminated
-
     async_write(
         socket,
         asio::buffer(msg),
@@ -49,31 +47,19 @@ void net::Connection::AsyncWrite(
         });
 }
 
-void net::Connection::AsyncReadUntil(
-    std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
+void net::Connection::AsyncRead(
+    const std::size_t n, std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
 
-    async_read_until(
+    async_read(
         socket,
-        buf,
-        CommFormat::kMessageTerminator,
+        buf.prepare(n),
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
                 NET_LOG_F(error, "Async read ec: %s", error.message().c_str());
             }
 
-            LOG_MESSAGE_F(debug, "Read %llu bytes (with terminator)", bytes_transferred);
-
-            LOG_MESSAGE_F(debug, "Received %s", asio::buffer_cast<const char*>(buf.data()));
+            LOG_MESSAGE_F(debug, "Read %llu bytes", bytes_transferred);
 
             callback(error, bytes_transferred);
         });
-}
-
-std::size_t net::Connection::GetBytesUnterminated(const std::size_t terminated_bytes) noexcept {
-    auto bytes_transferred_unterminated = static_cast<decltype(terminated_bytes)>(0);
-    if (terminated_bytes > sizeof CommFormat::kMessageTerminator) {
-        bytes_transferred_unterminated = terminated_bytes - sizeof CommFormat::kMessageTerminator;
-    }
-
-    return bytes_transferred_unterminated;
 }

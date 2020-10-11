@@ -15,7 +15,7 @@ namespace hyperion::net
 
     ///
     /// Format:
-    /// <Prefix> <Terminator>
+    /// <Prefix>
     [[nodiscard]] ByteVector MakeServerGreeting();
 
 
@@ -24,6 +24,9 @@ namespace hyperion::net
         using runtime_error::runtime_error;
     };
 
+
+    /// Bytes required to do parse
+    constexpr auto kParseClientGreetingBytes = 6;
 
     ///
     /// Parses to media::MediaProp

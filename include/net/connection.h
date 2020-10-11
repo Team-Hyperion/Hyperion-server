@@ -55,21 +55,17 @@ namespace hyperion::net
                         std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
         ///
-        /// Wrapper around asio::async_read_until
-        /// Forwards results to callback
-        void AsyncReadUntil(
-            std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
+        /// Wrapper around asio::async_read
+        /// \param n Bytes to read
+        /// \param callback Results forwarded to
+        void AsyncRead(std::size_t n,
+                       std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
 
-        ///
-        /// \return Bytes without message terminator, 0 if terminated_bytes < sizeof message terminator
-        static std::size_t GetBytesUnterminated(std::size_t terminated_bytes) noexcept;
-
-
-        [[nodiscard]] Status GetStatus() const {
+        [[nodiscard]] Status GetStatus() const noexcept {
             return status_;
         }
-        void SetStatus(const Status status) {
+        void SetStatus(const Status status) noexcept {
             this->status_ = status;
         }
 
