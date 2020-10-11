@@ -121,6 +121,9 @@ namespace hyperion::net
             }
         };
 
+        EXPECT_FALSE(parse(media::MediaType::image, 0));
+        EXPECT_FALSE(parse(media::MediaType::video, 0));
+
         EXPECT_TRUE(parse(media::MediaType::image, 1));
         EXPECT_TRUE(parse(media::MediaType::video, 1));
 

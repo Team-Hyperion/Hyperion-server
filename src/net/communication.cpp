@@ -61,6 +61,9 @@ media::MediaProp net::ParseClientGreeting(const media::MediaConfig& config,
 
     LOG_MESSAGE_F(debug, "Received fps %hhu", fps);
 
+    if (fps == 0) {
+        throw ParseGreetingError("FPS cannot be 0");
+    }
     if (media_type == media::MediaType::video && fps > config.maxFps) {
         throw ParseGreetingError("FPS greater than maximum");
     }
