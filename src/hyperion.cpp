@@ -32,8 +32,8 @@ void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data)
 void RunServer() {
     asio::io_context io_context;
 
-    std::vector<media::MediaDimension> allowed_dimensions{{720, 480}, {1280, 720}, {1920, 1080}};
-    net::NetData net_data({}, std::move(allowed_dimensions)); // Requires io_context to destruct
+    media::MediaConfig media_config({{720, 480}, {1280, 720}, {1920, 1080}}, 60);
+    net::NetData net_data({}, std::move(media_config)); // Requires io_context to destruct
 
 
     auto conn_services = std::thread(&RunConnectionServices, std::ref(io_context), std::ref(net_data));

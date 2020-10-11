@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "core/logger.h"
+#include "media/media_config.h"
 #include "net/comm_format.h"
 #include "net/type_alias.h"
 
@@ -19,7 +20,7 @@ net::ByteVector net::MakeServerGreeting() {
     return vec;
 }
 
-media::MediaProp net::ParseClientGreeting(const std::vector<media::MediaDimension>& allowed_dimensions,
+media::MediaProp net::ParseClientGreeting(const media::MediaConfig& config,
                                           const ByteVector::value_type* ptr,
                                           const std::size_t size) {
     if (size < sizeof(media::MediaProp)) {
@@ -35,7 +36,8 @@ media::MediaProp net::ParseClientGreeting(const std::vector<media::MediaDimensio
     static_assert(sizeof(media::MediaProp) == 1 + 2 + 2 + 1);
 
 
-    const uint8_t type = get_byte();
+    const uint8_t type    = get_byte();
+    const auto media_type = static_cast<media::MediaType>(type);
 
     LOG_MESSAGE_F(debug, "Received media type %hhu", type);
 
@@ -49,8 +51,8 @@ media::MediaProp net::ParseClientGreeting(const std::vector<media::MediaDimensio
 
     LOG_MESSAGE_F(debug, "Received media type %hux%hu", width, height);
 
-    if (std::find(allowed_dimensions.begin(), allowed_dimensions.end(), media::MediaDimension(width, height)) ==
-        allowed_dimensions.end()) {
+    if (std::find(config.dimensions.begin(), config.dimensions.end(), media::MediaDimension(width, height)) ==
+        config.dimensions.end()) {
         throw ParseGreetingError("Unsupported media dimension");
     }
 
@@ -59,10 +61,13 @@ media::MediaProp net::ParseClientGreeting(const std::vector<media::MediaDimensio
 
     LOG_MESSAGE_F(debug, "Received fps %hhu", fps);
 
-    return {static_cast<media::MediaType>(type), width, height, fps};
+    if (media_type == media::MediaType::video && fps > config.maxFps) {
+        throw ParseGreetingError("FPS greater than maximum");
+    }
+
+    return {media_type, width, height, fps};
 }
 
-media::MediaProp net::ParseClientGreeting(const std::vector<media::MediaDimension>& allowed_dimensions,
-                                          const ByteVector& b_vec) {
-    return ParseClientGreeting(allowed_dimensions, b_vec.data(), b_vec.size());
+media::MediaProp net::ParseClientGreeting(const media::MediaConfig& config, const ByteVector& b_vec) {
+    return ParseClientGreeting(config, b_vec.data(), b_vec.size());
 }

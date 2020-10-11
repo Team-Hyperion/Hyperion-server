@@ -127,7 +127,7 @@ void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn,
         core::CapturingGuard<void()> guard([&]() { conn.buf.consume(bytes_transferred); });
         const auto* bytes = asio::buffer_cast<const ByteVector::value_type*>(conn.buf.data());
 
-        conn.mediaProp = ParseClientGreeting(netData_->GetAllowedMediaDim(), bytes, bytes_transferred);
+        conn.mediaProp = ParseClientGreeting(netData_->GetMediaConfig(), bytes, bytes_transferred);
 
 
         conn.SetStatus(Connection::Status::active);

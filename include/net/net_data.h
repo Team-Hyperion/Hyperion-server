@@ -8,7 +8,7 @@
 #include <utility>
 
 #include "core/guarded_data.h"
-
+#include "media/media_config.h"
 #include "net/connection.h"
 #include "net/net_prop.h"
 
@@ -34,16 +34,16 @@ namespace hyperion::net
     class NetData
     {
     public:
-        NetData(NetProp net_prop, std::vector<media::MediaDimension> allowed_dimensions)
-            : netProp_(std::move(net_prop)), allowedDimensions_(std::move(allowed_dimensions)) {}
+        NetData(NetProp net_prop, media::MediaConfig media_config)
+            : netProp_(std::move(net_prop)), mediaConfig_(std::move(media_config)) {}
 
 
         [[nodiscard]] const NetProp& GetNetProp() const {
             return netProp_;
         }
 
-        [[nodiscard]] auto& GetAllowedMediaDim() const {
-            return allowedDimensions_;
+        [[nodiscard]] auto& GetMediaConfig() const {
+            return mediaConfig_;
         }
 
         core::GuardedData<Connections> connections;
@@ -53,7 +53,7 @@ namespace hyperion::net
     private:
         NetProp netProp_;
 
-        std::vector<media::MediaDimension> allowedDimensions_;
+        media::MediaConfig mediaConfig_;
     };
 
 } // namespace hyperion::net

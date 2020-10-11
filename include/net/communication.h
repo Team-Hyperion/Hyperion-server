@@ -9,6 +9,11 @@
 #include "media/media_prop.h"
 #include "net/type_alias.h"
 
+namespace hyperion::media
+{
+    struct MediaConfig;
+}
+
 namespace hyperion::net
 {
     // Processes bytes that are (to / from client)
@@ -35,18 +40,17 @@ namespace hyperion::net
     /// <Media_type> <Media_width> <Media_height> <Media_fps>
     /// Bytes: 1, 2, 2, 1
     ///
-    /// \param allowed_dimensions Throws ParseGreetingError if does not match dimension in this vector
+    /// \param config Specifies MediaProps to reject and allow
     /// \param ptr Pointer to bytes
     /// \param size Number of bytes
     ///
     /// \exception ParseGreetingError Invalid number of bytes, or byte contents were invalid
-    [[nodiscard]] media::MediaProp ParseClientGreeting(const std::vector<media::MediaDimension>& allowed_dimensions,
+    [[nodiscard]] media::MediaProp ParseClientGreeting(const media::MediaConfig& config,
                                                        const ByteVector::value_type* ptr,
                                                        std::size_t size);
 
     // See above
-    [[nodiscard]] media::MediaProp ParseClientGreeting(const std::vector<media::MediaDimension>& allowed_dimensions,
-                                                       const ByteVector& b_vec);
+    [[nodiscard]] media::MediaProp ParseClientGreeting(const media::MediaConfig& config, const ByteVector& b_vec);
 } // namespace hyperion::net
 
 #endif // HYPERION_INCLUDE_NET_PROCESS_BYTES_H
