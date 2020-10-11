@@ -4,6 +4,8 @@
 #define HYPERION_INCLUDE_NET_PROCESS_BYTES_H
 #pragma once
 
+#include <stdexcept>
+
 #include "media/media_prop.h"
 #include "net/type_alias.h"
 
@@ -17,6 +19,12 @@ namespace hyperion::net
     [[nodiscard]] ByteVector MakeServerGreeting();
 
 
+    class ParseGreetingError final : public std::runtime_error
+    {
+        using runtime_error::runtime_error;
+    };
+
+
     ///
     /// Parses to media::MediaProp
     ///
@@ -24,7 +32,7 @@ namespace hyperion::net
     /// <Media_type> <Media_width> <Media_height> <Media_fps>
     /// Bytes: 1, 2, 2, 1
     ///
-    /// \exception std::runtime_error b_vec has invalid number of bytes
+    /// \exception ParseGreetingError Invalid number of bytes, or byte contents were invalid
     [[nodiscard]] media::MediaProp ParseClientGreeting(const ByteVector::value_type* ptr, std::size_t size);
 
     // See above

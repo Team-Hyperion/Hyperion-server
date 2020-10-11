@@ -33,7 +33,7 @@ namespace hyperion::net
             auto props = ParseClientGreeting({0x03, 1, 1, 1, 1, 1});
             FAIL();
         }
-        catch (std::exception&) {
+        catch (ParseGreetingError&) {
         }
     }
 
@@ -42,7 +42,7 @@ namespace hyperion::net
             auto props = ParseClientGreeting({1});
             FAIL();
         }
-        catch (std::exception&) {
+        catch (ParseGreetingError&) {
         }
     }
 
