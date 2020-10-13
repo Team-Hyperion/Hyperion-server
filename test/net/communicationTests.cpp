@@ -90,30 +90,16 @@ namespace hyperion::net
         parse({{1, 2}, {3, 4}}, 4, 3);
     }
 
-    TEST_F(CommunicationTest, ParseClientGreetingValidFps) {
-        auto parse = [](const media::MediaType media_type, const uint8_t fps) {
-            const auto props = ParseClientGreeting({{{100, 101}}, 30}, MakeClientGreeting(media_type, 100, 101, fps));
-
-            EXPECT_EQ(props.GetType(), media_type);
-            EXPECT_EQ(props.width, 100);
-            EXPECT_EQ(props.height, 101);
-            EXPECT_EQ(props.fps, fps);
-        };
-
-        parse(media::MediaType::image, 1);
-        parse(media::MediaType::video, 1);
-
-        parse(media::MediaType::image, 10);
-        parse(media::MediaType::video, 10);
-
-        parse(media::MediaType::image, 30);
-        parse(media::MediaType::video, 30);
-    }
-
-    TEST_F(CommunicationTest, ParseClientGreetingInvalidFps) {
+    TEST_F(CommunicationTest, ParseClientGreetingFps) {
         auto parse = [](const media::MediaType media_type, const uint8_t fps) {
             try {
-                auto props = ParseClientGreeting({{{100, 101}}, 30}, MakeClientGreeting(media_type, 100, 101, fps));
+                const auto props =
+                    ParseClientGreeting({{{100, 101}}, 30}, MakeClientGreeting(media_type, 100, 101, fps));
+
+                EXPECT_EQ(props.GetType(), media_type);
+                EXPECT_EQ(props.width, 100);
+                EXPECT_EQ(props.height, 101);
+                EXPECT_EQ(props.fps, fps);
                 return true;
             }
             catch (ParseGreetingError&) {
@@ -121,14 +107,21 @@ namespace hyperion::net
             }
         };
 
-        EXPECT_FALSE(parse(media::MediaType::image, 0));
-        EXPECT_FALSE(parse(media::MediaType::video, 0));
-
+        // Any FPS is allowed for an image
+        EXPECT_TRUE(parse(media::MediaType::image, 0));
         EXPECT_TRUE(parse(media::MediaType::image, 1));
-        EXPECT_TRUE(parse(media::MediaType::video, 1));
+        EXPECT_TRUE(parse(media::MediaType::image, 10));
+        EXPECT_TRUE(parse(media::MediaType::image, 30));
+        EXPECT_TRUE(parse(media::MediaType::image, 31));
+        EXPECT_TRUE(parse(media::MediaType::image, 255));
 
-        EXPECT_TRUE(parse(media::MediaType::image, 31));  // Max fps ignored for images
-        EXPECT_FALSE(parse(media::MediaType::video, 31)); // Max fps enforced for videos
+
+        EXPECT_FALSE(parse(media::MediaType::video, 0));
+        EXPECT_TRUE(parse(media::MediaType::video, 1));
+        EXPECT_TRUE(parse(media::MediaType::video, 10));
+        EXPECT_TRUE(parse(media::MediaType::video, 30));
+        EXPECT_FALSE(parse(media::MediaType::video, 31));  // Max fps enforced for videos
+        EXPECT_FALSE(parse(media::MediaType::video, 255)); // Max fps enforced for videos
     }
 
     TEST_F(CommunicationTest, ParseClientGreetingTooFewBytes) {
