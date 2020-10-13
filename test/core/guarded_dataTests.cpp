@@ -11,7 +11,11 @@ namespace hyperion::core
 
         GuardedAccess access(gd); // Mutex locked
         access->first = 12;
-        EXPECT_EQ((*access).first, 12);
+        EXPECT_EQ(gd.GetUnsafe().first, 12);
+
+        auto& ref = *access;
+        ref.first = 20;
+        EXPECT_EQ(ref.first, 20);
 
         access.Get()->GetUnsafe().first = 9;
         EXPECT_EQ(gd.GetUnsafe().first, 9);

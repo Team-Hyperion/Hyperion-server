@@ -58,6 +58,7 @@ namespace hyperion::net
         /// Wrapper around asio::async_read
         /// \param n Bytes to read
         /// \param callback Results forwarded to
+        /// \remark callback must consume bytes_transferred from buf
         void AsyncRead(std::size_t n,
                        std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 

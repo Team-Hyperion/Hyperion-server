@@ -40,7 +40,7 @@ namespace hyperion::net
     private:
         ///
         /// Returns immediately, initializes async accept
-        void DoAsyncAccept();
+        void DoAsyncAccept() noexcept;
 
         ///
         /// Sets up callbacks for sending greeting, listening for greeting

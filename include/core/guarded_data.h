@@ -60,7 +60,7 @@ namespace hyperion::core
         GuardedAccess(GuardedAccess&& other) noexcept = delete;
 
 
-        [[nodiscard]] typename GuardedDataT::ValueT operator*() const {
+        [[nodiscard]] typename GuardedDataT::ValueT& operator*() const {
             return guardedData_.data_;
         }
 

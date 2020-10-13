@@ -39,7 +39,7 @@ void net::Connection::AsyncWrite(
         asio::buffer(msg),
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
-                NET_LOG_F(error, "Async write ec: %s", error.message().c_str());
+                LOG_MESSAGE_F(debug, "Async write ec: %s", error.message().c_str());
                 return;
             }
 
@@ -55,7 +55,7 @@ void net::Connection::AsyncRead(
         buf.prepare(n),
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
-                NET_LOG_F(error, "Async read ec: %s", error.message().c_str());
+                LOG_MESSAGE_F(debug, "Async read ec: %s", error.message().c_str());
             }
 
             LOG_MESSAGE_F(debug, "Read %llu bytes", bytes_transferred);

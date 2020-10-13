@@ -43,17 +43,22 @@ void net::ConnectionAcceptor::BeginAsyncAccept() noexcept {
     DoAsyncAccept();
 }
 
-void net::ConnectionAcceptor::DoAsyncAccept() {
-    acceptor_.async_accept([&](const asio::error_code& error, asio::ip::tcp::socket socket) {
-        DoAsyncAccept();
+void net::ConnectionAcceptor::DoAsyncAccept() noexcept {
+    try {
+        acceptor_.async_accept([&](const asio::error_code& error, asio::ip::tcp::socket socket) {
+            DoAsyncAccept();
 
-        if (!error) {
-            HandleAccept(socket);
-        }
-        else {
-            LOG_MESSAGE_F(error, "Failed to accept client %s", error.message().c_str());
-        }
-    });
+            if (!error) {
+                HandleAccept(socket);
+            }
+            else {
+                LOG_MESSAGE_F(error, "Failed to accept client %s", error.message().c_str());
+            }
+        });
+    }
+    catch (std::exception& e) {
+        LOG_MESSAGE_F(error, "Failed to setup async accept, no new connections will be accepted: %s", e.what());
+    }
 }
 
 void net::ConnectionAcceptor::HandleAccept(asio::ip::tcp::socket& socket) const {
