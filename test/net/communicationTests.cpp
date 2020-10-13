@@ -70,24 +70,38 @@ namespace hyperion::net
         parse(255);
     }
 
-    TEST_F(CommunicationTest, ParseClientGreetingInvalidDimension) {
+    TEST_F(CommunicationTest, ParseClientGreetingDimension) {
         auto parse = [](std::vector<media::MediaDimension> allowed, const uint16_t width, const uint16_t height) {
             try {
-                auto props = ParseClientGreeting({std::move(allowed), 30},
-                                                 MakeClientGreeting(media::MediaType::image, width, height, 30));
-                FAIL();
+                const auto props = ParseClientGreeting({std::move(allowed), 30},
+                                                       MakeClientGreeting(media::MediaType::image, width, height, 30));
+
+                EXPECT_EQ(props.GetType(), media::MediaType::image);
+                EXPECT_EQ(props.width, width);
+                EXPECT_EQ(props.height, height);
+                EXPECT_EQ(props.fps, 30);
+
+                return true;
             }
             catch (ParseGreetingError&) {
+                return false;
             }
         };
 
-        parse({}, 0, 0);
+        // All dimensions permitted if media dimension is blank
+        EXPECT_TRUE(parse({}, 0, 0));
+        EXPECT_TRUE(parse({}, 20, 10));
+        EXPECT_TRUE(parse({}, 4848, 2323));
+        EXPECT_TRUE(parse({}, 9990, 8880));
 
-        parse({{1920, 1080}}, 1921, 1080);
-        parse({{1920, 1080}}, 1920, 1081);
+        EXPECT_FALSE(parse({{1920, 1080}}, 1921, 1080));
+        EXPECT_FALSE(parse({{1920, 1080}}, 1920, 1081));
+        EXPECT_TRUE(parse({{1920, 1080}}, 1920, 1080));
 
-        parse({{1, 2}, {3, 4}}, 2, 1);
-        parse({{1, 2}, {3, 4}}, 4, 3);
+        EXPECT_FALSE(parse({{1, 2}, {3, 4}}, 2, 1));
+        EXPECT_FALSE(parse({{1, 2}, {3, 4}}, 4, 3));
+        EXPECT_TRUE(parse({{1, 2}, {3, 4}}, 1, 2));
+        EXPECT_TRUE(parse({{1, 2}, {3, 4}}, 3, 4));
     }
 
     TEST_F(CommunicationTest, ParseClientGreetingFps) {

@@ -51,8 +51,9 @@ media::MediaProp net::ParseClientGreeting(const media::MediaConfig& config,
 
     LOG_MESSAGE_F(debug, "Received media type %hux%hu", width, height);
 
-    if (std::find(config.dimensions.begin(), config.dimensions.end(), media::MediaDimension(width, height)) ==
-        config.dimensions.end()) {
+    if (!config.dimensions.empty() &&
+        std::find(config.dimensions.begin(), config.dimensions.end(), media::MediaDimension(width, height)) ==
+            config.dimensions.end()) {
         throw ParseGreetingError("Unsupported media dimension");
     }
 
