@@ -118,7 +118,7 @@ void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexc
             CallbackReceiveGreetingTimeout(conn);
         });
 
-        conn.SetStatus(Connection::Status::awaiting_c_greeting);
+        conn.SetStatus(ConnectionStatus::awaiting_c_greeting);
     }
     catch (std::exception& e) {
         LOG_MESSAGE_F(error, "Callback sent greeting: %s", e.what());
@@ -135,7 +135,7 @@ void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn,
         conn.mediaProp = ParseClientGreeting(netData_->GetMediaConfig(), bytes, bytes_transferred);
 
 
-        conn.SetStatus(Connection::Status::active);
+        conn.SetStatus(ConnectionStatus::active);
 
         try {
             assert(conn.buf.size() == 0); // Buffer should be empty after finishing acceptance
@@ -157,7 +157,7 @@ void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn,
 }
 
 void net::ConnectionAcceptor::CallbackSendGreetingTimeout(Connection& conn) noexcept {
-    if (conn.GetStatus() != Connection::Status::send_s_greeting) {
+    if (conn.GetStatus() != ConnectionStatus::send_s_greeting) {
         return;
     }
 
@@ -167,9 +167,9 @@ void net::ConnectionAcceptor::CallbackSendGreetingTimeout(Connection& conn) noex
 }
 
 void net::ConnectionAcceptor::CallbackReceiveGreetingTimeout(Connection& conn) noexcept {
-    assert(conn.GetStatus() != Connection::Status::send_s_greeting); // Server greeting should have been send first
+    assert(conn.GetStatus() != ConnectionStatus::send_s_greeting); // Server greeting should have been send first
 
-    if (conn.GetStatus() != Connection::Status::awaiting_c_greeting) {
+    if (conn.GetStatus() != ConnectionStatus::awaiting_c_greeting) {
         return;
     }
 

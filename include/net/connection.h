@@ -14,9 +14,41 @@
 
 namespace hyperion::net
 {
+    enum class ConnectionStatus
+    {
+        send_s_greeting,
+        awaiting_c_greeting,
+        active // Client greeting received and accepted
+    };
+
+
+    ///
+    /// Connection without networking parts for testing
+    class ConnectionBase
+    {
+    public:
+        [[nodiscard]] ConnectionStatus GetStatus() const noexcept {
+            return status_;
+        }
+
+        void SetStatus(const ConnectionStatus status) noexcept {
+            // Can only move down the list of ConnectionStatus
+            assert(static_cast<unsigned>(status) >= static_cast<unsigned>(status_));
+
+            this->status_ = status;
+        }
+
+
+        media::MediaProp mediaProp;
+
+    private:
+        ConnectionStatus status_ = ConnectionStatus::send_s_greeting;
+    };
+
+
     ///
     /// A connection with a client
-    class Connection
+    class Connection : public ConnectionBase
     {
         using IdT = std::size_t;
 
@@ -27,13 +59,6 @@ namespace hyperion::net
         static constexpr auto kReceiveBufSize = 1000;
 
         using SocketT = asio::ip::tcp::socket;
-
-        enum class Status
-        {
-            send_s_greeting,
-            awaiting_c_greeting,
-            active // Client greeting received and accepted
-        };
 
 
         explicit Connection(SocketT&& socket);
@@ -63,14 +88,6 @@ namespace hyperion::net
                        std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
 
-        [[nodiscard]] Status GetStatus() const noexcept {
-            return status_;
-        }
-        void SetStatus(const Status status) noexcept {
-            this->status_ = status;
-        }
-
-
         const IdT id;
 
         SocketT socket;
@@ -78,12 +95,6 @@ namespace hyperion::net
 
         /// Use for timeouts
         asio::steady_timer timer;
-
-
-        media::MediaProp mediaProp;
-
-    private:
-        Status status_ = Status::send_s_greeting;
     };
 
 } // namespace hyperion::net
