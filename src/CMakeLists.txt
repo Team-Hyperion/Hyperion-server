@@ -26,6 +26,14 @@ set(HYPERION_SRC_FILES
         ${HYPERION_DIR}/core/filesystem.cpp
         ${HYPERION_DIR}/core/logger.cpp
         ${HYPERION_DIR}/core/utility.cpp
+        
+
+        ${HYPERION_DIR}/net/communication.cpp
+        ${HYPERION_DIR}/net/connection.cpp
+
+        ${HYPERION_DIR}/net/service/connection_acceptor.cpp
+        ${HYPERION_DIR}/net/service/connection_gc.cpp
+        ${HYPERION_DIR}/net/service/connection_listener.cpp
         )
 # ======================================== END Source files .cpp
 
