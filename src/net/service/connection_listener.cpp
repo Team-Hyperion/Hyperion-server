@@ -4,7 +4,6 @@
 
 #include <asio/error.hpp>
 #include <cassert>
-#include <fstream>
 
 #include "core/resource_guard.h"
 #include "net/connection.h"
@@ -21,25 +20,20 @@ void DoAsyncReceive(net::Connection& conn) {
             core::CapturingGuard<void()> guard([&]() { conn.buf.consume(bytes_transferred); });
 
             if (error) {
-                if (error.value() == asio::error::eof) {
-                    conn.End();
-                }
-                else {
+                if (error.value() != asio::error::eof) {
                     NET_LOG_F(error, "Connection listener async receive ec: %s", error.message().c_str());
                 }
+                conn.End();
                 return;
             }
+
             // This stream is unterminated
             LOG_MESSAGE_F(debug, "%llu Received %llu bytes", conn.id, bytes_transferred);
 
             const auto* bytes = asio::buffer_cast<const net::ByteVector::value_type*>(conn.buf.data());
 
-            {
-                // TODO choose file extension depending on media type
-                std::ofstream of("out.png", std::ios_base::app | std::ios_base::binary);
-                for (std::size_t i = 0; i < bytes_transferred; ++i) {
-                    of << bytes[i];
-                }
+            for (std::size_t i = 0; i < bytes_transferred; ++i) {
+                conn.GetOfstream() << bytes[i];
             }
 
             DoAsyncReceive(conn); // This needs to be at the END after done processing received bytes!!

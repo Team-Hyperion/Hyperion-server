@@ -21,7 +21,10 @@ void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data)
     auto conn_acceptor = MakeConnectionAcceptor(net_data, io_context);
     assert(conn_acceptor.has_value());
 
-    conn_acceptor->onConnectionAccepted = [](net::Connection& conn) { BeginAsyncReceive(conn); };
+    conn_acceptor->onConnectionAccepted = [&net_data](net::Connection& conn) {
+        conn.OpenOutFile(net_data.GetMediaConfig().mediaSavePath);
+        BeginAsyncReceive(conn);
+    };
 
     // Start services
     conn_acceptor->BeginAsyncAccept();
@@ -33,6 +36,7 @@ void RunServer() {
     asio::io_context io_context;
 
     media::MediaConfig media_config;
+    media_config.mediaSavePath = "media";
     net::NetData net_data({}, std::move(media_config)); // Requires io_context to destruct
 
 

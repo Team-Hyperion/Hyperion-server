@@ -11,7 +11,7 @@ std::ofstream media::MakeSaveFile(const std::string& save_path) {
 
     create_directories(path.parent_path());
 
-    auto of = std::ofstream(save_path);
+    auto of = std::ofstream(save_path, std::ios::binary);
     if (!of.is_open()) {
         throw ReadFileError("Failed to open ofstream for save file");
     }

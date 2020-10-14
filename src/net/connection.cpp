@@ -47,6 +47,8 @@ net::Connection::Connection(SocketT&& socket) : socket(std::move(socket)), timer
 void net::Connection::End() noexcept {
     try {
         if (socket.is_open()) {
+            GetOfstream().close();
+
             socket.shutdown(asio::socket_base::shutdown_both);
             socket.close();
 
