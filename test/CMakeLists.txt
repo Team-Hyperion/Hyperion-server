@@ -66,6 +66,8 @@ set(HYPERION_TEST_FILES
 	${HYPERION_TEST_DIR}/core/resource_guardTests.cpp
 	${HYPERION_TEST_DIR}/core/utilityTests.cpp
 
+	${HYPERION_TEST_DIR}/media/saveTests.cpp
+
 	${HYPERION_TEST_DIR}/net/communicationTests.cpp
 )
 # ======================================== END Test files .cpp

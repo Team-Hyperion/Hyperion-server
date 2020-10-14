@@ -27,6 +27,7 @@ set(HYPERION_SRC_FILES
         ${HYPERION_DIR}/core/logger.cpp
         ${HYPERION_DIR}/core/utility.cpp
         
+        ${HYPERION_DIR}/media/save.cpp
 
         ${HYPERION_DIR}/net/communication.cpp
         ${HYPERION_DIR}/net/connection.cpp
