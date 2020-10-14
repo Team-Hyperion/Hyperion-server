@@ -7,7 +7,9 @@
 #include <asio/ip/tcp.hpp>
 #include <asio/steady_timer.hpp>
 #include <asio/streambuf.hpp>
+#include <fstream>
 #include <functional>
+#include <string>
 
 #include "media/media_prop.h"
 #include "net/type_alias.h"
@@ -26,7 +28,13 @@ namespace hyperion::net
     /// Connection without networking parts for testing
     class ConnectionBase
     {
+        using IdT = std::size_t;
+
+        inline static IdT nextConnectionId_ = 1;
+
     public:
+        ConnectionBase() : id(nextConnectionId_++) {}
+
         [[nodiscard]] ConnectionStatus GetStatus() const noexcept {
             return status_;
         }
@@ -39,10 +47,23 @@ namespace hyperion::net
         }
 
 
+        void OpenOutFile(const std::string& file_directory_path);
+
+        std::ofstream& GetOfstream() noexcept {
+            assert(outFile_.is_open());
+            return outFile_;
+        }
+
+
+        const IdT id;
+
         media::MediaProp mediaProp;
 
     private:
         ConnectionStatus status_ = ConnectionStatus::send_s_greeting;
+
+        std::ofstream outFile_;
+        std::size_t filePart_ = 1;
     };
 
 
@@ -50,9 +71,6 @@ namespace hyperion::net
     /// A connection with a client
     class Connection : public ConnectionBase
     {
-        using IdT = std::size_t;
-
-        inline static IdT nextConnectionId_ = 1;
 
     public:
         /// Bytes
@@ -87,8 +105,6 @@ namespace hyperion::net
         void AsyncRead(std::size_t n,
                        std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
-
-        const IdT id;
 
         SocketT socket;
         asio::streambuf buf{kReceiveBufSize};

@@ -5,13 +5,41 @@
 #include <asio/read.hpp>
 #include <asio/write.hpp>
 
+#include "media/save.h"
 #include "net/comm_format.h"
 #include "net/logger.h"
 
 using namespace hyperion;
 
-net::Connection::Connection(SocketT&& socket)
-    : id(nextConnectionId_++), socket(std::move(socket)), timer(this->socket.get_executor()) {
+void net::ConnectionBase::OpenOutFile(const std::string& file_directory_path) {
+    std::string file_ext;
+
+    switch (mediaProp.GetType()) {
+    case media::MediaType::image:
+        file_ext = media::MediaTypeExt::kImage;
+        break;
+    case media::MediaType::video:
+        file_ext = media::MediaTypeExt::kVideo;
+        break;
+    default:
+        assert(false);
+    }
+
+    std::string save_name;
+
+    // Also include forward slash only if directory is provided
+    // prevents trying to write to root directory when empty
+    if (!file_directory_path.empty()) {
+        save_name.append("/");
+    }
+    save_name += std::to_string(id) + "-" + std::to_string(filePart_++) + "." + file_ext;
+
+    outFile_ = std::move(media::MakeSaveFile(file_directory_path + save_name));
+}
+
+// ======================================================================
+
+net::Connection::Connection(SocketT&& socket) : socket(std::move(socket)), timer(this->socket.get_executor()) {
     LOG_MESSAGE_F(
         info, "Created connection %llu, %s", id, this->socket.remote_endpoint().address().to_string().c_str());
 }

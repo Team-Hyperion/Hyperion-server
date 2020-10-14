@@ -17,6 +17,14 @@ namespace hyperion::media
         count_
     };
 
+    /// Media type file extensions
+    struct MediaTypeExt
+    {
+        static constexpr auto kImage = "png";
+        static constexpr auto kVideo = "mp4";
+    };
+
+
     class MediaDimension
     {
     public:
