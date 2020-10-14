@@ -4,6 +4,7 @@
 
 #include <asio/error.hpp>
 #include <cassert>
+#include <fstream>
 
 #include "core/resource_guard.h"
 #include "net/connection.h"
@@ -28,35 +29,20 @@ void DoAsyncReceive(net::Connection& conn) {
                 }
                 return;
             }
-            DoAsyncReceive(conn);
-
             // This stream is unterminated
+            LOG_MESSAGE_F(debug, "%llu Received %llu bytes", conn.id, bytes_transferred);
 
-            // TODO send this to be saved
-
-            //
-            //
-            //
-            //
-            //
-            //
-            // For testing only
             const auto* bytes = asio::buffer_cast<const net::ByteVector::value_type*>(conn.buf.data());
-            std::string s;
-            s.resize(bytes_transferred);
 
-            for (std::size_t i = 0; i < bytes_transferred; ++i) {
-                s[i] = bytes[i];
+            {
+                // TODO choose file extension depending on media type
+                std::ofstream of("out.png", std::ios_base::app | std::ios_base::binary);
+                for (std::size_t i = 0; i < bytes_transferred; ++i) {
+                    of << bytes[i];
+                }
             }
 
-            LOG_MESSAGE_F(debug, "%llu Received %llu bytes, %s", conn.id, bytes_transferred, s.c_str());
-            //
-            //
-            //
-            //
-            //
-            //
-            //
+            DoAsyncReceive(conn); // This needs to be at the END after done processing received bytes!!
         });
 }
 
