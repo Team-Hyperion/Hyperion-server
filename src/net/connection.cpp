@@ -37,7 +37,6 @@ void net::ConnectionBase::FinishOutFile() {
     assert(!outFilePath_.empty()); // BeginOutFiles was not called
     outFile_.close();
 
-    filePart_++;
     outFilePath_ = MakeOutFilePath();
 }
 
@@ -62,7 +61,7 @@ std::string net::ConnectionBase::MakeOutFilePath() const {
     if (!outFileDirectory_.empty()) {
         save_name.append("/");
     }
-    save_name += std::to_string(id) + "-" + std::to_string(filePart_) + "." + file_ext;
+    save_name += std::to_string(id) + "." + file_ext;
 
     return outFileDirectory_ + save_name;
 }

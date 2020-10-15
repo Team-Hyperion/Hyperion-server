@@ -75,7 +75,6 @@ namespace hyperion::net
         std::string outFileDirectory_;
 
         std::ofstream outFile_;
-        std::size_t filePart_ = 1;
     };
 
 

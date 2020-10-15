@@ -29,7 +29,7 @@ namespace hyperion::net
             c.BeginOutFiles("Connection/save/media");
             c.OpenOutFile() << "h3llo\n"; // Fails assert if file was not closed after open
 
-            EXPECT_TRUE(std::ifstream("Connection/save/media/" + std::to_string(c.id) + "-1.mp4").is_open());
+            EXPECT_TRUE(std::ifstream("Connection/save/media/" + std::to_string(c.id) + ".mp4").is_open());
         }
 
         std::filesystem::remove_all("Connection");
@@ -43,7 +43,7 @@ namespace hyperion::net
 
             c.BeginOutFiles("");
 
-            EXPECT_TRUE(std::ifstream(std::to_string(c.id) + "-1.mp4").is_open());
+            EXPECT_TRUE(std::ifstream(std::to_string(c.id) + ".mp4").is_open());
         }
 
         std::filesystem::remove_all("Connection");
@@ -65,7 +65,7 @@ namespace hyperion::net
             b.close();
 
 
-            auto ifs = std::ifstream(std::to_string(c.id) + "-1.mp4");
+            auto ifs = std::ifstream(std::to_string(c.id) + ".mp4");
             EXPECT_TRUE(ifs.is_open());
             std::string s;
             ifs >> s;
@@ -89,30 +89,7 @@ namespace hyperion::net
             // Make directories + file
             c.OpenOutFile() << "h3llo\n";
 
-            EXPECT_TRUE(std::ifstream("Connection/save/media/" + std::to_string(c.id) + "-2.mp4").is_open());
-        }
-
-        std::filesystem::remove_all("Connection");
-    }
-
-    TEST(Connection, FinishOutFileIncrementPart) {
-        {
-            ConnectionBase c;
-
-            c.mediaProp.SetType(media::MediaType::video);
-
-            c.BeginOutFiles("Connection/save/media");
-
-            c.FinishOutFile();
-            c.FinishOutFile();
-            c.FinishOutFile();
-            c.FinishOutFile();
-
-            const auto path = std::string("Connection/save/media/") + std::to_string(c.id) + "-5.mp4";
-            EXPECT_FALSE(std::ifstream(path).is_open());
-
-            auto& of = c.OpenOutFile(); // Creates file
-            EXPECT_TRUE(std::ifstream(path).is_open());
+            EXPECT_TRUE(std::ifstream("Connection/save/media/" + std::to_string(c.id) + ".mp4").is_open());
         }
 
         std::filesystem::remove_all("Connection");
