@@ -86,7 +86,7 @@ namespace hyperion::net
 
     public:
         /// Bytes
-        static constexpr auto kReceiveBufSize = 1000;
+        static constexpr auto kReceiveBufSize = 32768;
 
         using SocketT = asio::ip::tcp::socket;
 
