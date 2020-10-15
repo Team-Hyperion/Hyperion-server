@@ -47,12 +47,19 @@ namespace hyperion::net
         }
 
 
-        void OpenOutFile(const std::string& file_directory_path);
+        ///
+        /// Call ONCE before any methods involving out files
+        void BeginOutFiles(std::string file_directory_path);
 
-        std::ofstream& GetOfstream() noexcept {
-            assert(outFile_.is_open());
-            return outFile_;
-        }
+        ///
+        /// Opens and returns ofstream to file for saving media to
+        /// Creates out file if non existent
+        [[nodiscard]] std::ofstream& OpenOutFile();
+
+        ///
+        /// Forever done writing to the file
+        /// Next call to OpenOutFile will create a new file
+        void FinishOutFile();
 
 
         const IdT id;
@@ -60,7 +67,12 @@ namespace hyperion::net
         media::MediaProp mediaProp;
 
     private:
+        [[nodiscard]] std::string MakeOutFilePath() const;
+
         ConnectionStatus status_ = ConnectionStatus::send_s_greeting;
+
+        std::string outFilePath_;
+        std::string outFileDirectory_;
 
         std::ofstream outFile_;
         std::size_t filePart_ = 1;

@@ -20,32 +20,16 @@ namespace hyperion::net
         EXPECT_EQ(c.GetStatus(), ConnectionStatus::active);
     }
 
-    TEST(Connection, OpenOutFileMakeFile) {
+    TEST(Connection, BeginOutFileMakeFile) {
         {
             ConnectionBase c;
 
             c.mediaProp.SetType(media::MediaType::video);
 
-            c.OpenOutFile("Connection/save/media");
+            c.BeginOutFiles("Connection/save/media");
+            c.OpenOutFile() << "h3llo\n"; // Fails assert if file was not closed after open
 
             EXPECT_TRUE(std::ifstream("Connection/save/media/" + std::to_string(c.id) + "-1.mp4").is_open());
-        }
-
-        std::filesystem::remove_all("Connection");
-    }
-
-    TEST(Connection, OpenOutFileIncrementPart) {
-        {
-            ConnectionBase c;
-
-            c.mediaProp.SetType(media::MediaType::video);
-
-            c.OpenOutFile("Connection/save/media");
-            c.OpenOutFile("Connection/save/media");
-            c.OpenOutFile("Connection/save/media");
-            c.OpenOutFile("Connection/save/media"); // Part 4
-
-            EXPECT_TRUE(std::ifstream("Connection/save/media/" + std::to_string(c.id) + "-4.mp4").is_open());
         }
 
         std::filesystem::remove_all("Connection");
@@ -57,9 +41,78 @@ namespace hyperion::net
 
             c.mediaProp.SetType(media::MediaType::video);
 
-            c.OpenOutFile("");
+            c.BeginOutFiles("");
 
             EXPECT_TRUE(std::ifstream(std::to_string(c.id) + "-1.mp4").is_open());
+        }
+
+        std::filesystem::remove_all("Connection");
+    }
+
+    TEST(Connection, OpenOutFileAppend) {
+        {
+            ConnectionBase c;
+
+            c.mediaProp.SetType(media::MediaType::video);
+
+            c.BeginOutFiles("");
+            auto& a = c.OpenOutFile();
+            a << "a";
+            a.close();
+
+            auto& b = c.OpenOutFile();
+            b << "b\n";
+            b.close();
+
+
+            auto ifs = std::ifstream(std::to_string(c.id) + "-1.mp4");
+            EXPECT_TRUE(ifs.is_open());
+            std::string s;
+            ifs >> s;
+            EXPECT_EQ(s, "ab");
+        }
+
+        std::filesystem::remove_all("Connection");
+    }
+
+    TEST(Connection, OpenOutFileMakeNewFile) {
+        {
+            ConnectionBase c;
+
+            c.mediaProp.SetType(media::MediaType::video);
+
+            c.BeginOutFiles("Connection/save/media");
+            c.FinishOutFile();
+
+            std::filesystem::remove_all("Connection");
+
+            // Make directories + file
+            c.OpenOutFile() << "h3llo\n";
+
+            EXPECT_TRUE(std::ifstream("Connection/save/media/" + std::to_string(c.id) + "-2.mp4").is_open());
+        }
+
+        std::filesystem::remove_all("Connection");
+    }
+
+    TEST(Connection, FinishOutFileIncrementPart) {
+        {
+            ConnectionBase c;
+
+            c.mediaProp.SetType(media::MediaType::video);
+
+            c.BeginOutFiles("Connection/save/media");
+
+            c.FinishOutFile();
+            c.FinishOutFile();
+            c.FinishOutFile();
+            c.FinishOutFile();
+
+            const auto path = std::string("Connection/save/media/") + std::to_string(c.id) + "-5.mp4";
+            EXPECT_FALSE(std::ifstream(path).is_open());
+
+            auto& of = c.OpenOutFile(); // Creates file
+            EXPECT_TRUE(std::ifstream(path).is_open());
         }
 
         std::filesystem::remove_all("Connection");

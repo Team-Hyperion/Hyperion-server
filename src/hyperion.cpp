@@ -22,7 +22,7 @@ void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data)
     assert(conn_acceptor.has_value());
 
     conn_acceptor->onConnectionAccepted = [&net_data](net::Connection& conn) {
-        conn.OpenOutFile(net_data.GetMediaConfig().mediaSavePath);
+        conn.BeginOutFiles(net_data.GetMediaConfig().mediaSavePath);
         BeginAsyncReceive(conn);
     };
 

@@ -32,8 +32,11 @@ void DoAsyncReceive(net::Connection& conn) {
 
             const auto* bytes = asio::buffer_cast<const net::ByteVector::value_type*>(conn.buf.data());
 
+            auto& out_file = conn.OpenOutFile();
+            core::CapturingGuard<void()> of_guard([&]() { out_file.close(); });
+
             for (std::size_t i = 0; i < bytes_transferred; ++i) {
-                conn.GetOfstream() << bytes[i];
+                out_file << bytes[i];
             }
 
             DoAsyncReceive(conn); // This needs to be at the END after done processing received bytes!!
