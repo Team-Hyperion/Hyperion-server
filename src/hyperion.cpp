@@ -2,6 +2,7 @@
 
 #include "hyperion.h"
 
+#include <ctime>
 #include <iostream>
 #include <thread>
 
@@ -36,7 +37,7 @@ void RunServer(const std::string& save_path) {
     asio::io_context io_context;
 
     media::MediaConfig media_config;
-    media_config.mediaSavePath = save_path;
+    media_config.mediaSavePath = save_path + std::to_string(std::time(nullptr)); // UNIX time
 
     LOG_MESSAGE_F(info, "Save directory: %s", media_config.mediaSavePath.c_str());
 
