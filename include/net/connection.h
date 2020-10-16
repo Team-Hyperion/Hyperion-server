@@ -58,7 +58,7 @@ namespace hyperion::net
 
         ///
         /// Forever done writing to the file
-        /// Next call to OpenOutFile will create a new file
+        /// Connection should be disconnected after this
         void FinishOutFile();
 
 

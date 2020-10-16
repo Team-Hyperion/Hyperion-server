@@ -39,8 +39,6 @@ std::ofstream& net::ConnectionBase::OpenOutFile() {
 void net::ConnectionBase::FinishOutFile() {
     assert(!outFilePath_.empty()); // BeginOutFiles was not called
     outFile_.close();
-
-    outFilePath_ = MakeOutFilePath();
 }
 
 std::string net::ConnectionBase::MakeOutFilePath() const {
