@@ -2,6 +2,7 @@
 
 #include "hyperion.h"
 
+#include <ctime>
 #include <iostream>
 #include <thread>
 
@@ -21,7 +22,10 @@ void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data)
     auto conn_acceptor = MakeConnectionAcceptor(net_data, io_context);
     assert(conn_acceptor.has_value());
 
-    conn_acceptor->onConnectionAccepted = [](net::Connection& conn) { BeginAsyncReceive(conn); };
+    conn_acceptor->onConnectionAccepted = [&net_data](net::Connection& conn) {
+        conn.BeginOutFiles(net_data.GetMediaConfig().mediaSavePath);
+        BeginAsyncReceive(conn);
+    };
 
     // Start services
     conn_acceptor->BeginAsyncAccept();
@@ -29,10 +33,14 @@ void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data)
     io_context.run();
 }
 
-void RunServer() {
+void RunServer(const std::string& save_path) {
     asio::io_context io_context;
 
-    media::MediaConfig media_config({{720, 480}, {1280, 720}, {1920, 1080}}, 60);
+    media::MediaConfig media_config;
+    media_config.mediaSavePath = save_path + std::to_string(std::time(nullptr)); // UNIX time
+
+    LOG_MESSAGE_F(info, "Save directory: %s", media_config.mediaSavePath.c_str());
+
     net::NetData net_data({}, std::move(media_config)); // Requires io_context to destruct
 
 
@@ -52,7 +60,7 @@ void RunServer() {
 }
 
 
-int main(int argc, char* argv[]) {
+int main(const int argc, char* argv[]) {
     core::SetExecutingDirectory(argv[0]);
 
     // Log file
@@ -66,7 +74,12 @@ int main(int argc, char* argv[]) {
 
 
     // Initialize server
-    RunServer();
+    std::string save_path;
+    if (argc >= 2) {
+        save_path = argv[1];
+        save_path.push_back('/');
+    }
+    RunServer(save_path);
 
 
     LOG_MESSAGE(info, "goodbye!");

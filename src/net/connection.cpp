@@ -5,13 +5,71 @@
 #include <asio/read.hpp>
 #include <asio/write.hpp>
 
+#include "media/save.h"
 #include "net/comm_format.h"
 #include "net/logger.h"
 
 using namespace hyperion;
 
-net::Connection::Connection(SocketT&& socket)
-    : id(nextConnectionId_++), socket(std::move(socket)), timer(this->socket.get_executor()) {
+void net::ConnectionBase::BeginOutFiles(std::string file_directory_path) {
+    outFileDirectory_ = std::move(file_directory_path);
+    outFilePath_      = std::move(MakeOutFilePath());
+
+    outFile_ = std::move(media::MakeSaveFile(outFilePath_));
+    outFile_.close();
+}
+
+std::ofstream& net::ConnectionBase::OpenOutFile() {
+    assert(!outFilePath_.empty()); // BeginOutFiles was not called
+    assert(!outFile_.is_open());   // Forgot to close outFile_ earlier
+
+    // Open existing or make new file
+    outFile_.open(outFilePath_, std::ios::app | std::ios::binary);
+    if (!outFile_.is_open()) {
+        outFile_ = std::move(media::MakeSaveFile(outFilePath_));
+    }
+
+    if (!outFile_.is_open()) {
+        LOG_MESSAGE_F(error, "Failed to open out file at: %s", outFilePath_.c_str());
+    }
+
+    return outFile_;
+}
+
+void net::ConnectionBase::FinishOutFile() {
+    assert(!outFilePath_.empty()); // BeginOutFiles was not called
+    outFile_.close();
+}
+
+std::string net::ConnectionBase::MakeOutFilePath() const {
+    std::string file_ext;
+
+    switch (mediaProp.GetType()) {
+    case media::MediaType::image:
+        file_ext = media::MediaTypeExt::kImage;
+        break;
+    case media::MediaType::video:
+        file_ext = media::MediaTypeExt::kVideo;
+        break;
+    default:
+        assert(false);
+    }
+
+    std::string save_name;
+
+    // Also include forward slash only if directory is provided
+    // prevents trying to write to root directory when empty
+    if (!outFileDirectory_.empty()) {
+        save_name.append("/");
+    }
+    save_name += std::to_string(id) + "." + file_ext;
+
+    return outFileDirectory_ + save_name;
+}
+
+// ======================================================================
+
+net::Connection::Connection(SocketT&& socket) : socket(std::move(socket)), timer(this->socket.get_executor()) {
     LOG_MESSAGE_F(
         info, "Created connection %llu, %s", id, this->socket.remote_endpoint().address().to_string().c_str());
 }
@@ -19,6 +77,8 @@ net::Connection::Connection(SocketT&& socket)
 void net::Connection::End() noexcept {
     try {
         if (socket.is_open()) {
+            FinishOutFile();
+
             socket.shutdown(asio::socket_base::shutdown_both);
             socket.close();
 

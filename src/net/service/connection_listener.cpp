@@ -20,43 +20,31 @@ void DoAsyncReceive(net::Connection& conn) {
             core::CapturingGuard<void()> guard([&]() { conn.buf.consume(bytes_transferred); });
 
             if (error) {
-                if (error.value() == asio::error::eof) {
-                    conn.End();
-                }
-                else {
+                if (error.value() != asio::error::eof) {
                     NET_LOG_F(error, "Connection listener async receive ec: %s", error.message().c_str());
                 }
+                conn.End();
                 return;
             }
-            DoAsyncReceive(conn);
 
             // This stream is unterminated
+            LOG_MESSAGE_F(debug, "%llu Received %llu bytes", conn.id, bytes_transferred);
 
-            // TODO send this to be saved
-
-            //
-            //
-            //
-            //
-            //
-            //
-            // For testing only
             const auto* bytes = asio::buffer_cast<const net::ByteVector::value_type*>(conn.buf.data());
-            std::string s;
-            s.resize(bytes_transferred);
 
-            for (std::size_t i = 0; i < bytes_transferred; ++i) {
-                s[i] = bytes[i];
+            try {
+                auto& out_file = conn.OpenOutFile();
+                core::CapturingGuard<void()> of_guard([&]() { out_file.close(); });
+
+                for (std::size_t i = 0; i < bytes_transferred; ++i) {
+                    out_file << bytes[i];
+                }
+            }
+            catch (std::exception& e) {
+                LOG_MESSAGE_F(error, "Failed to save received bytes to file: %s", e.what());
             }
 
-            LOG_MESSAGE_F(debug, "%llu Received %llu bytes, %s", conn.id, bytes_transferred, s.c_str());
-            //
-            //
-            //
-            //
-            //
-            //
-            //
+            DoAsyncReceive(conn); // This needs to be at the END after done processing received bytes!!
         });
 }
 

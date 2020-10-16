@@ -7,33 +7,87 @@
 #include <asio/ip/tcp.hpp>
 #include <asio/steady_timer.hpp>
 #include <asio/streambuf.hpp>
+#include <fstream>
 #include <functional>
+#include <string>
 
 #include "media/media_prop.h"
 #include "net/type_alias.h"
 
 namespace hyperion::net
 {
+    enum class ConnectionStatus
+    {
+        send_s_greeting,
+        awaiting_c_greeting,
+        active // Client greeting received and accepted
+    };
+
+
     ///
-    /// A connection with a client
-    class Connection
+    /// Connection without networking parts for testing
+    class ConnectionBase
     {
         using IdT = std::size_t;
 
         inline static IdT nextConnectionId_ = 1;
 
     public:
+        ConnectionBase() : id(nextConnectionId_++) {}
+
+        [[nodiscard]] ConnectionStatus GetStatus() const noexcept {
+            return status_;
+        }
+
+        void SetStatus(const ConnectionStatus status) noexcept {
+            // Can only move down the list of ConnectionStatus
+            assert(static_cast<unsigned>(status) >= static_cast<unsigned>(status_));
+
+            this->status_ = status;
+        }
+
+
+        ///
+        /// Call ONCE before any methods involving out files
+        void BeginOutFiles(std::string file_directory_path);
+
+        ///
+        /// Opens and returns ofstream to file for saving media to
+        /// Creates out file if non existent
+        [[nodiscard]] std::ofstream& OpenOutFile();
+
+        ///
+        /// Forever done writing to the file
+        /// Connection should be disconnected after this
+        void FinishOutFile();
+
+
+        const IdT id;
+
+        media::MediaProp mediaProp;
+
+    private:
+        [[nodiscard]] std::string MakeOutFilePath() const;
+
+        ConnectionStatus status_ = ConnectionStatus::send_s_greeting;
+
+        std::string outFilePath_;
+        std::string outFileDirectory_;
+
+        std::ofstream outFile_;
+    };
+
+
+    ///
+    /// A connection with a client
+    class Connection : public ConnectionBase
+    {
+
+    public:
         /// Bytes
-        static constexpr auto kReceiveBufSize = 1000;
+        static constexpr auto kReceiveBufSize = 32768;
 
         using SocketT = asio::ip::tcp::socket;
-
-        enum class Status
-        {
-            send_s_greeting,
-            awaiting_c_greeting,
-            active // Client greeting received and accepted
-        };
 
 
         explicit Connection(SocketT&& socket);
@@ -63,27 +117,11 @@ namespace hyperion::net
                        std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
 
-        [[nodiscard]] Status GetStatus() const noexcept {
-            return status_;
-        }
-        void SetStatus(const Status status) noexcept {
-            this->status_ = status;
-        }
-
-
-        const IdT id;
-
         SocketT socket;
         asio::streambuf buf{kReceiveBufSize};
 
         /// Use for timeouts
         asio::steady_timer timer;
-
-
-        media::MediaProp mediaProp;
-
-    private:
-        Status status_ = Status::send_s_greeting;
     };
 
 } // namespace hyperion::net
