@@ -21,77 +21,86 @@ namespace hyperion::net
     }
 
     TEST(Connection, BeginOutFileMakeFile) {
-        {
-            ConnectionBase c;
+        ConnectionBase c;
 
-            c.mediaProp.SetType(media::MediaType::video);
+        c.mediaProp.SetType(media::MediaType::video);
 
-            c.BeginOutFiles("Connection/save/media");
-            c.OpenOutFile() << "h3llo\n"; // Fails assert if file was not closed after open
+        c.BeginOutFiles("Connection/save/media");
+        c.OpenOutFile() << "h3llo\n"; // Fails assert if file was not closed after open
 
-            EXPECT_TRUE(std::ifstream("Connection/save/media/" + std::to_string(c.id) + ".mp4").is_open());
-        }
+        const auto save_path = std::string("Connection/save/media/") + std::to_string(c.id) + ".mp4";
+        EXPECT_TRUE(std::ifstream(save_path).is_open());
 
+        // Cleanup
+        c.FinishOutFile();
         std::filesystem::remove_all("Connection");
     }
 
     TEST(Connection, OpenOutFileNoDirectory) {
-        {
-            ConnectionBase c;
+        ConnectionBase c;
 
-            c.mediaProp.SetType(media::MediaType::video);
+        c.mediaProp.SetType(media::MediaType::video);
 
-            c.BeginOutFiles("");
+        c.BeginOutFiles("");
 
-            EXPECT_TRUE(std::ifstream(std::to_string(c.id) + ".mp4").is_open());
-        }
+        const auto save_path = std::to_string(c.id) + ".mp4";
+        EXPECT_TRUE(std::ifstream(save_path).is_open());
 
-        std::filesystem::remove_all("Connection");
+
+        // Cleanup
+        c.FinishOutFile();
+        std::filesystem::remove(save_path);
     }
 
     TEST(Connection, OpenOutFileAppend) {
-        {
-            ConnectionBase c;
+        ConnectionBase c;
 
-            c.mediaProp.SetType(media::MediaType::video);
+        c.mediaProp.SetType(media::MediaType::video);
 
-            c.BeginOutFiles("");
-            auto& a = c.OpenOutFile();
-            a << "a";
-            a.close();
+        c.BeginOutFiles("");
+        auto& a = c.OpenOutFile();
+        a << "a";
+        a.close();
 
-            auto& b = c.OpenOutFile();
-            b << "b\n";
-            b.close();
+        auto& b = c.OpenOutFile();
+        b << "b\n";
+        b.close();
 
 
-            auto ifs = std::ifstream(std::to_string(c.id) + ".mp4");
-            EXPECT_TRUE(ifs.is_open());
-            std::string s;
-            ifs >> s;
-            EXPECT_EQ(s, "ab");
-        }
+        const auto save_path = std::to_string(c.id) + ".mp4";
+        auto ifs             = std::ifstream(save_path);
+        EXPECT_TRUE(ifs.is_open());
+        std::string s;
+        ifs >> s;
+        EXPECT_EQ(s, "ab");
 
-        std::filesystem::remove_all("Connection");
+
+        // Cleanup
+        ifs.close();
+        c.FinishOutFile();
+        std::filesystem::remove(save_path);
     }
 
     TEST(Connection, OpenOutFileMakeNewFile) {
-        {
-            ConnectionBase c;
+        ConnectionBase c;
 
-            c.mediaProp.SetType(media::MediaType::video);
+        c.mediaProp.SetType(media::MediaType::video);
 
-            c.BeginOutFiles("Connection/save/media");
-            c.FinishOutFile();
+        c.BeginOutFiles("Connection/save/media"); // Creates a file
+        c.FinishOutFile();
 
-            std::filesystem::remove_all("Connection");
+        std::filesystem::remove_all("Connection");
 
-            // Make directories + file
-            c.OpenOutFile() << "h3llo\n";
+        // Make directories + file
+        c.OpenOutFile() << "h3llo\n";
 
-            EXPECT_TRUE(std::ifstream("Connection/save/media/" + std::to_string(c.id) + ".mp4").is_open());
-        }
 
+        const auto save_path = std::string("Connection/save/media/") + std::to_string(c.id) + ".mp4";
+        EXPECT_TRUE(std::ifstream(save_path).is_open());
+
+
+        // Cleanup
+        c.FinishOutFile();
         std::filesystem::remove_all("Connection");
     }
 } // namespace hyperion::net
