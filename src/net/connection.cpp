@@ -29,7 +29,10 @@ std::ofstream& net::ConnectionBase::OpenOutFile() {
         outFile_ = std::move(media::MakeSaveFile(outFilePath_));
     }
 
-    assert(outFile_.is_open());
+    if (!outFile_.is_open()) {
+        LOG_MESSAGE_F(error, "Failed to open out file at: %s", outFilePath_.c_str());
+    }
+
     return outFile_;
 }
 

@@ -32,11 +32,16 @@ void DoAsyncReceive(net::Connection& conn) {
 
             const auto* bytes = asio::buffer_cast<const net::ByteVector::value_type*>(conn.buf.data());
 
-            auto& out_file = conn.OpenOutFile();
-            core::CapturingGuard<void()> of_guard([&]() { out_file.close(); });
+            try {
+                auto& out_file = conn.OpenOutFile();
+                core::CapturingGuard<void()> of_guard([&]() { out_file.close(); });
 
-            for (std::size_t i = 0; i < bytes_transferred; ++i) {
-                out_file << bytes[i];
+                for (std::size_t i = 0; i < bytes_transferred; ++i) {
+                    out_file << bytes[i];
+                }
+            }
+            catch (std::exception& e) {
+                LOG_MESSAGE_F(error, "Failed to save received bytes to file: %s", e.what());
             }
 
             DoAsyncReceive(conn); // This needs to be at the END after done processing received bytes!!
