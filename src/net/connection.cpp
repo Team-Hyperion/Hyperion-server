@@ -74,6 +74,14 @@ net::Connection::Connection(SocketT&& socket) : socket(std::move(socket)), timer
         info, "Created connection %llu, %s", id, this->socket.remote_endpoint().address().to_string().c_str());
 }
 
+net::Connection::~Connection() {
+    assert(CanDestruct());
+}
+
+bool net::Connection::CanDestruct() const noexcept {
+    return refCount_ == 0;
+}
+
 void net::Connection::End() noexcept {
     try {
         if (socket.is_open()) {
@@ -122,4 +130,13 @@ void net::Connection::AsyncRead(
 
             callback(error, bytes_transferred);
         });
+}
+
+void net::Connection::IncRefCount() noexcept {
+    refCount_++;
+}
+void net::Connection::DecRefCount() noexcept {
+    assert(refCount_ != 0);
+
+    refCount_--;
 }

@@ -91,9 +91,15 @@ namespace hyperion::net
 
 
         explicit Connection(SocketT&& socket);
+        ~Connection();
 
         Connection(const Connection& other)     = delete;
         Connection(Connection&& other) noexcept = delete;
+
+
+        ///
+        /// \return true if this is unreferenced by asio
+        [[nodiscard]] bool CanDestruct() const noexcept;
 
 
         ///
@@ -122,6 +128,19 @@ namespace hyperion::net
 
         /// Use for timeouts
         asio::steady_timer timer;
+
+    private:
+        // For tracking async operations
+
+        ///
+        /// Call prior to async operation
+        void IncRefCount() noexcept;
+
+        ///
+        /// Call after async operation completes
+        void DecRefCount() noexcept;
+
+        std::size_t refCount_ = 0;
     };
 
 } // namespace hyperion::net
