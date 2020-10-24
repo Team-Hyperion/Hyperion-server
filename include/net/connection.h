@@ -122,14 +122,24 @@ namespace hyperion::net
         void AsyncRead(std::size_t n,
                        std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
+        ///
+        /// Wrapper around asio::ip::tcp::socket::async_receive
+        /// \param n Bytes the buffer should hold
+        /// \param callback Results forwarded to
+        /// \remark callback must consume bytes_transferred from buf
+        void AsyncReceive(std::size_t n,
+                          std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
-        SocketT socket;
+
         asio::streambuf buf{kReceiveBufSize};
 
         /// Use for timeouts
         asio::steady_timer timer;
 
     private:
+        SocketT socket_;
+
+
         // For tracking async operations
 
         ///

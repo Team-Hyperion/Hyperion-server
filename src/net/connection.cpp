@@ -69,9 +69,9 @@ std::string net::ConnectionBase::MakeOutFilePath() const {
 
 // ======================================================================
 
-net::Connection::Connection(SocketT&& socket) : socket(std::move(socket)), timer(this->socket.get_executor()) {
+net::Connection::Connection(SocketT&& socket) : timer(socket.get_executor()), socket_(std::move(socket)) {
     LOG_MESSAGE_F(
-        info, "Created connection %llu, %s", id, this->socket.remote_endpoint().address().to_string().c_str());
+        info, "Created connection %llu, %s", id, this->socket_.remote_endpoint().address().to_string().c_str());
 }
 
 net::Connection::~Connection() {
@@ -84,11 +84,11 @@ bool net::Connection::CanDestruct() const noexcept {
 
 void net::Connection::End() noexcept {
     try {
-        if (socket.is_open()) {
+        if (socket_.is_open()) {
             FinishOutFile();
 
-            socket.shutdown(asio::socket_base::shutdown_both);
-            socket.close();
+            socket_.shutdown(asio::socket_base::shutdown_both);
+            socket_.close();
 
             LOG_MESSAGE_F(info, "Connection %llu closed", id);
         }
@@ -103,7 +103,7 @@ void net::Connection::AsyncWrite(
     std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
 
     async_write(
-        socket,
+        socket_,
         asio::buffer(msg),
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
@@ -119,7 +119,7 @@ void net::Connection::AsyncRead(
     const std::size_t n, std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
 
     async_read(
-        socket,
+        socket_,
         buf.prepare(n),
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
@@ -127,6 +127,20 @@ void net::Connection::AsyncRead(
             }
 
             LOG_MESSAGE_F(debug, "Read %llu bytes", bytes_transferred);
+
+            callback(error, bytes_transferred);
+        });
+}
+
+void net::Connection::AsyncReceive(
+    const std::size_t n, std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
+
+    socket_.async_receive(
+        buf.prepare(n),
+        [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
+            if (error) {
+                LOG_MESSAGE_F(debug, "Async read ec: %s", error.message().c_str());
+            }
 
             callback(error, bytes_transferred);
         });
