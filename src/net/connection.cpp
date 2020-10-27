@@ -37,7 +37,6 @@ std::ofstream& net::ConnectionBase::OpenOutFile() {
 }
 
 void net::ConnectionBase::FinishOutFile() {
-    assert(!outFilePath_.empty()); // BeginOutFiles was not called
     outFile_.close();
 }
 
