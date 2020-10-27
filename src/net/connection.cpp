@@ -126,7 +126,7 @@ void net::Connection::AsyncRead(
 
     async_read(
         socket_,
-        buf.prepare(n),
+        buf_.prepare(n),
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
                 LOG_MESSAGE_F(debug, "Async read ec: %s", error.message().c_str());
@@ -146,7 +146,7 @@ void net::Connection::AsyncReceive(
     IncRefCount();
 
     socket_.async_receive(
-        buf.prepare(n),
+        buf_.prepare(n),
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
                 LOG_MESSAGE_F(debug, "Async read ec: %s", error.message().c_str());

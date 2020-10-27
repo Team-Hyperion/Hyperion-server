@@ -131,13 +131,19 @@ namespace hyperion::net
                           std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
 
-        asio::streambuf buf{kReceiveBufSize};
+        [[nodiscard]] auto& GetStreambuf() noexcept {
+            assert(refCount_ !=
+                   0); // Reference count should not be zero as this should be accessed ONLY within asio callbacks
+            return buf_;
+        }
+
 
         /// Use for timeouts
         asio::steady_timer timer;
 
     private:
         SocketT socket_;
+        asio::streambuf buf_{kReceiveBufSize};
 
 
         // For tracking async operations

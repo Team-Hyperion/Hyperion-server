@@ -129,8 +129,8 @@ void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexc
 void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn,
                                                        const std::size_t bytes_transferred) const noexcept {
     try {
-        core::CapturingGuard<void()> guard([&]() { conn.buf.consume(bytes_transferred); });
-        const auto* bytes = asio::buffer_cast<const ByteVector::value_type*>(conn.buf.data());
+        core::CapturingGuard<void()> guard([&]() { conn.GetStreambuf().consume(bytes_transferred); });
+        const auto* bytes = asio::buffer_cast<const ByteVector::value_type*>(conn.GetStreambuf().data());
 
         conn.mediaProp = ParseClientGreeting(netData_->GetMediaConfig(), bytes, bytes_transferred);
 
@@ -138,7 +138,7 @@ void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn,
         conn.SetStatus(ConnectionStatus::active);
 
         try {
-            assert(conn.buf.size() == 0); // Buffer should be empty after finishing acceptance
+            assert(conn.GetStreambuf().size() == 0); // Buffer should be empty after finishing acceptance
 
             LOG_MESSAGE_F(info, "Accepted connection %llu", conn.id);
             onConnectionAccepted(conn);

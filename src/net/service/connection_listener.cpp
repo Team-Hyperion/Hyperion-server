@@ -12,38 +12,39 @@
 using namespace hyperion;
 
 void DoAsyncReceive(net::Connection& conn) {
-    assert(conn.buf.size() == 0);
+    assert(conn.GetStreambuf().size() == 0);
 
-    conn.AsyncReceive(conn.buf.max_size(), [&](const asio::error_code& error, const std::size_t bytes_transferred) {
-        core::CapturingGuard<void()> guard([&]() { conn.buf.consume(bytes_transferred); });
+    conn.AsyncReceive(
+        conn.GetStreambuf().max_size(), [&](const asio::error_code& error, const std::size_t bytes_transferred) {
+            core::CapturingGuard<void()> guard([&]() { conn.GetStreambuf().consume(bytes_transferred); });
 
-        if (error) {
-            if (error.value() != asio::error::eof) {
-                NET_LOG_F(error, "Connection listener async receive ec: %s", error.message().c_str());
+            if (error) {
+                if (error.value() != asio::error::eof) {
+                    NET_LOG_F(error, "Connection listener async receive ec: %s", error.message().c_str());
+                }
+                conn.End();
+                return;
             }
-            conn.End();
-            return;
-        }
 
-        // This stream is unterminated
-        LOG_MESSAGE_F(debug, "%llu Received %llu bytes", conn.id, bytes_transferred);
+            // This stream is unterminated
+            LOG_MESSAGE_F(debug, "%llu Received %llu bytes", conn.id, bytes_transferred);
 
-        const auto* bytes = asio::buffer_cast<const net::ByteVector::value_type*>(conn.buf.data());
+            const auto* bytes = asio::buffer_cast<const net::ByteVector::value_type*>(conn.GetStreambuf().data());
 
-        try {
-            auto& out_file = conn.OpenOutFile();
-            core::CapturingGuard<void()> of_guard([&]() { out_file.close(); });
+            try {
+                auto& out_file = conn.OpenOutFile();
+                core::CapturingGuard<void()> of_guard([&]() { out_file.close(); });
 
-            for (std::size_t i = 0; i < bytes_transferred; ++i) {
-                out_file << bytes[i];
+                for (std::size_t i = 0; i < bytes_transferred; ++i) {
+                    out_file << bytes[i];
+                }
             }
-        }
-        catch (std::exception& e) {
-            LOG_MESSAGE_F(error, "Failed to save received bytes to file: %s", e.what());
-        }
+            catch (std::exception& e) {
+                LOG_MESSAGE_F(error, "Failed to save received bytes to file: %s", e.what());
+            }
 
-        DoAsyncReceive(conn); // This needs to be at the END after done processing received bytes!!
-    });
+            DoAsyncReceive(conn); // This needs to be at the END after done processing received bytes!!
+        });
 }
 
 void net::BeginAsyncReceive(Connection& connection) {
