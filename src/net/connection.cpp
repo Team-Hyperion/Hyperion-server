@@ -69,7 +69,7 @@ std::string net::ConnectionBase::MakeOutFilePath() const {
 
 // ======================================================================
 
-net::Connection::Connection(SocketT&& socket) : timer(socket.get_executor()), socket_(std::move(socket)) {
+net::Connection::Connection(SocketT&& socket) : socket_(std::move(socket)), timer_(socket_.get_executor()) {
     LOG_MESSAGE_F(
         info, "Created connection %llu, %s", id, this->socket_.remote_endpoint().address().to_string().c_str());
 }
@@ -156,6 +156,20 @@ void net::Connection::AsyncReceive(
 
             DecRefCount();
         });
+}
+
+void net::Connection::AsyncWait(std::function<void(const asio::error_code& error)>&& callback) {
+    IncRefCount();
+
+    timer_.async_wait([this, callback{std::move(callback)}](const asio::error_code& error) {
+        if (error) {
+            LOG_MESSAGE_F(debug, "Async wait ec: %s", error.message().c_str());
+        }
+
+        callback(error);
+
+        DecRefCount();
+    });
 }
 
 void net::Connection::IncRefCount() noexcept {

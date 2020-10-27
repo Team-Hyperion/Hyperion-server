@@ -81,8 +81,8 @@ void net::ConnectionAcceptor::HandleAccept(asio::ip::tcp::socket& socket) const 
     });
 
     // Timeout
-    conn.timer.expires_after(netData_->GetNetProp().toSendServerGreeting);
-    conn.timer.async_wait([&](const asio::error_code& error) {
+    conn.SetTimerExpiresAfter(netData_->GetNetProp().toSendServerGreeting);
+    conn.AsyncWait([&](const asio::error_code& error) {
         if (error) {
             NET_LOG_F(error, "Send server greeting timeout ec: %s", error.message().c_str());
             return;
@@ -108,8 +108,8 @@ void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexc
                        });
 
         // Timeout
-        conn.timer.expires_after(netData_->GetNetProp().toReceiveClientGreeting);
-        conn.timer.async_wait([&](const asio::error_code& error) {
+        conn.SetTimerExpiresAfter(netData_->GetNetProp().toReceiveClientGreeting);
+        conn.AsyncWait([&](const asio::error_code& error) {
             if (error) {
                 NET_LOG_F(error, "Received client greeting timeout ec: %s", error.message().c_str());
                 return;

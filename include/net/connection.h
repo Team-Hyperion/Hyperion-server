@@ -131,19 +131,30 @@ namespace hyperion::net
                           std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
 
+        ///
+        /// Wrapper around asio::steady_timer::async_wait
+        /// \param callback Results forwarded to
+        void AsyncWait(std::function<void(const asio::error_code& error)>&& callback);
+
+
         [[nodiscard]] auto& GetStreambuf() noexcept {
             assert(refCount_ !=
                    0); // Reference count should not be zero as this should be accessed ONLY within asio callbacks
             return buf_;
         }
 
-
-        /// Use for timeouts
-        asio::steady_timer timer;
+        ///
+        /// Sets the expiry time of timer from now
+        auto SetTimerExpiresAfter(const asio::steady_timer::duration& expiry_time) {
+            return timer_.expires_after(expiry_time);
+        }
 
     private:
         SocketT socket_;
         asio::streambuf buf_{kReceiveBufSize};
+
+        /// Used for timeouts
+        asio::steady_timer timer_;
 
 
         // For tracking async operations
