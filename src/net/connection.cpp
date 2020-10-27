@@ -102,6 +102,8 @@ void net::Connection::AsyncWrite(
     const ByteVector& msg,
     std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
 
+    IncRefCount();
+
     async_write(
         socket_,
         asio::buffer(msg),
@@ -112,11 +114,15 @@ void net::Connection::AsyncWrite(
             }
 
             callback(error, bytes_transferred);
+
+            DecRefCount();
         });
 }
 
 void net::Connection::AsyncRead(
     const std::size_t n, std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
+
+    IncRefCount();
 
     async_read(
         socket_,
@@ -129,11 +135,15 @@ void net::Connection::AsyncRead(
             LOG_MESSAGE_F(debug, "Read %llu bytes", bytes_transferred);
 
             callback(error, bytes_transferred);
+
+            DecRefCount();
         });
 }
 
 void net::Connection::AsyncReceive(
     const std::size_t n, std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
+
+    IncRefCount();
 
     socket_.async_receive(
         buf.prepare(n),
@@ -143,6 +153,8 @@ void net::Connection::AsyncReceive(
             }
 
             callback(error, bytes_transferred);
+
+            DecRefCount();
         });
 }
 
