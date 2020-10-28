@@ -19,7 +19,6 @@ void net::ConnectionGc::SetupSweepTimer() {
     timer_.async_wait([&](const asio::error_code& error) {
         if (error) {
             NET_LOG_F(error, "GC timer ec: %s", error.message().c_str());
-            return;
         }
 
         Sweep(netData_);
