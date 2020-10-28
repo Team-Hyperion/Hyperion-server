@@ -173,9 +173,17 @@ void net::Connection::AsyncWait(std::function<void(const asio::error_code& error
 
 void net::Connection::IncRefCount() noexcept {
     refCount_++;
+
+    if (refCount_ == 1) {
+        LOG_MESSAGE_F(debug, "Connection %llu has first reference", id);
+    }
 }
 void net::Connection::DecRefCount() noexcept {
     assert(refCount_ != 0);
 
     refCount_--;
+
+    if (refCount_ == 0) {
+        LOG_MESSAGE_F(debug, "Connection %llu has zero references", id);
+    }
 }

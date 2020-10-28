@@ -14,8 +14,12 @@
 
 namespace hyperion::net
 {
+    class ConnectionGc;
+
     class Connections
     {
+        friend ConnectionGc;
+
     public:
         decltype(auto) Add(Connection::SocketT&& socket) {
             connections_.push_back(std::make_unique<Connection>(std::move(socket)));

@@ -12,6 +12,7 @@
 
 #include "net/net_data.h"
 #include "net/service/connection_acceptor.h"
+#include "net/service/connection_gc.h"
 #include "net/service/connection_listener.h"
 
 using namespace hyperion;
@@ -22,6 +23,9 @@ void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data)
     auto conn_acceptor = MakeConnectionAcceptor(net_data, io_context);
     assert(conn_acceptor.has_value());
 
+    auto gc = net::ConnectionGc(io_context, net_data);
+
+
     conn_acceptor->onConnectionAccepted = [&net_data](net::Connection& conn) {
         conn.BeginOutFiles(net_data.GetMediaConfig().mediaSavePath);
         BeginAsyncReceive(conn);
@@ -29,6 +33,7 @@ void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data)
 
     // Start services
     conn_acceptor->BeginAsyncAccept();
+    gc.Start();
 
     io_context.run();
 }
