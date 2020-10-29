@@ -29,8 +29,7 @@ void net::ConnectionGc::SetupSweepTimer() {
 void net::ConnectionGc::Sweep(NetData& net_data) {
     LOG_MESSAGE(debug, "Beginning connection gc pass");
 
-    core::GuardedAccess access(net_data.connections);
-    auto& connections = access->connections_;
+    auto& connections = net_data.connections.connections_;
 
     // Must use iterators as this will be erasing at it iterates
     for (auto it = connections.begin(); it != connections.end();) {

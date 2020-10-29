@@ -62,11 +62,7 @@ void net::ConnectionAcceptor::DoAsyncAccept() noexcept {
 }
 
 void net::ConnectionAcceptor::HandleAccept(asio::ip::tcp::socket& socket) const {
-    auto make_connection = [&]() -> Connection& {
-        core::GuardedAccess connections(netData_->connections);
-        return *connections->Add(std::move(socket));
-    };
-    auto& conn = make_connection(); // Heap allocated, exists after this method exits
+    auto& conn = *netData_->connections.Add(std::move(socket)); // Heap allocated, exists after this method exits
 
 
     // Send server greeting

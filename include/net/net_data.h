@@ -7,7 +7,6 @@
 #include <memory>
 #include <utility>
 
-#include "core/guarded_data.h"
 #include "media/media_config.h"
 #include "net/connection.h"
 #include "net/net_prop.h"
@@ -50,7 +49,7 @@ namespace hyperion::net
             return mediaConfig_;
         }
 
-        core::GuardedData<Connections> connections;
+        Connections connections;
 
         volatile bool servicesExit = false;
 
