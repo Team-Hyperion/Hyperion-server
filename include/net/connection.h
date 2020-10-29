@@ -91,9 +91,15 @@ namespace hyperion::net
 
 
         explicit Connection(SocketT&& socket);
+        ~Connection();
 
         Connection(const Connection& other)     = delete;
         Connection(Connection&& other) noexcept = delete;
+
+
+        ///
+        /// \return true if this is unreferenced by asio
+        [[nodiscard]] bool CanDestruct() const noexcept;
 
 
         ///
@@ -112,16 +118,56 @@ namespace hyperion::net
         /// Wrapper around asio::async_read
         /// \param n Bytes to read
         /// \param callback Results forwarded to
-        /// \remark callback must consume bytes_transferred from buf
+        /// \remark callback must call .consume with bytes_transferred on streambuf
         void AsyncRead(std::size_t n,
                        std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
+        ///
+        /// Wrapper around asio::ip::tcp::socket::async_receive
+        /// \param n Bytes the buffer should hold
+        /// \param callback Results forwarded to
+        /// \remark callback must consume bytes_transferred from buf
+        void AsyncReceive(std::size_t n,
+                          std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback);
 
-        SocketT socket;
-        asio::streambuf buf{kReceiveBufSize};
 
-        /// Use for timeouts
-        asio::steady_timer timer;
+        ///
+        /// Wrapper around asio::steady_timer::async_wait
+        /// \param callback Results forwarded to
+        void AsyncWait(std::function<void(const asio::error_code& error)>&& callback);
+
+
+        [[nodiscard]] auto& GetStreambuf() noexcept {
+            assert(refCount_ !=
+                   0); // Reference count should not be zero as this should be accessed ONLY within asio callbacks
+            return buf_;
+        }
+
+        ///
+        /// Sets the expiry time of timer from now
+        auto SetTimerExpiresAfter(const asio::steady_timer::duration& expiry_time) {
+            return timer_.expires_after(expiry_time);
+        }
+
+    private:
+        SocketT socket_;
+        asio::streambuf buf_{kReceiveBufSize};
+
+        /// Used for timeouts
+        asio::steady_timer timer_;
+
+
+        // For tracking async operations
+
+        ///
+        /// Call prior to async operation
+        void IncRefCount() noexcept;
+
+        ///
+        /// Call after async operation completes
+        void DecRefCount() noexcept;
+
+        std::size_t refCount_ = 0;
     };
 
 } // namespace hyperion::net

@@ -7,15 +7,18 @@
 #include <memory>
 #include <utility>
 
-#include "core/guarded_data.h"
 #include "media/media_config.h"
 #include "net/connection.h"
 #include "net/net_prop.h"
 
 namespace hyperion::net
 {
+    class ConnectionGc;
+
     class Connections
     {
+        friend ConnectionGc;
+
     public:
         decltype(auto) Add(Connection::SocketT&& socket) {
             connections_.push_back(std::make_unique<Connection>(std::move(socket)));
@@ -46,7 +49,7 @@ namespace hyperion::net
             return mediaConfig_;
         }
 
-        core::GuardedData<Connections> connections;
+        Connections connections;
 
         volatile bool servicesExit = false;
 

@@ -62,11 +62,7 @@ void net::ConnectionAcceptor::DoAsyncAccept() noexcept {
 }
 
 void net::ConnectionAcceptor::HandleAccept(asio::ip::tcp::socket& socket) const {
-    auto make_connection = [&]() -> Connection& {
-        core::GuardedAccess connections(netData_->connections);
-        return *connections->Add(std::move(socket));
-    };
-    auto& conn = make_connection(); // Heap allocated, exists after this method exits
+    auto& conn = *netData_->connections.Add(std::move(socket)); // Heap allocated, exists after this method exits
 
 
     // Send server greeting
@@ -81,8 +77,8 @@ void net::ConnectionAcceptor::HandleAccept(asio::ip::tcp::socket& socket) const 
     });
 
     // Timeout
-    conn.timer.expires_after(netData_->GetNetProp().toSendServerGreeting);
-    conn.timer.async_wait([&](const asio::error_code& error) {
+    conn.SetTimerExpiresAfter(netData_->GetNetProp().toSendServerGreeting);
+    conn.AsyncWait([&](const asio::error_code& error) {
         if (error) {
             NET_LOG_F(error, "Send server greeting timeout ec: %s", error.message().c_str());
             return;
@@ -108,8 +104,8 @@ void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexc
                        });
 
         // Timeout
-        conn.timer.expires_after(netData_->GetNetProp().toReceiveClientGreeting);
-        conn.timer.async_wait([&](const asio::error_code& error) {
+        conn.SetTimerExpiresAfter(netData_->GetNetProp().toReceiveClientGreeting);
+        conn.AsyncWait([&](const asio::error_code& error) {
             if (error) {
                 NET_LOG_F(error, "Received client greeting timeout ec: %s", error.message().c_str());
                 return;
@@ -129,8 +125,8 @@ void net::ConnectionAcceptor::CallbackSentGreeting(Connection& conn) const noexc
 void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn,
                                                        const std::size_t bytes_transferred) const noexcept {
     try {
-        core::CapturingGuard<void()> guard([&]() { conn.buf.consume(bytes_transferred); });
-        const auto* bytes = asio::buffer_cast<const ByteVector::value_type*>(conn.buf.data());
+        core::CapturingGuard<void()> guard([&]() { conn.GetStreambuf().consume(bytes_transferred); });
+        const auto* bytes = asio::buffer_cast<const ByteVector::value_type*>(conn.GetStreambuf().data());
 
         conn.mediaProp = ParseClientGreeting(netData_->GetMediaConfig(), bytes, bytes_transferred);
 
@@ -138,7 +134,7 @@ void net::ConnectionAcceptor::CallbackReceivedGreeting(Connection& conn,
         conn.SetStatus(ConnectionStatus::active);
 
         try {
-            assert(conn.buf.size() == 0); // Buffer should be empty after finishing acceptance
+            assert(conn.GetStreambuf().size() == 0); // Buffer should be empty after finishing acceptance
 
             LOG_MESSAGE_F(info, "Accepted connection %llu", conn.id);
             onConnectionAccepted(conn);

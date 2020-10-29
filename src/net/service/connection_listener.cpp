@@ -12,12 +12,11 @@
 using namespace hyperion;
 
 void DoAsyncReceive(net::Connection& conn) {
-    assert(conn.buf.size() == 0);
+    assert(conn.GetStreambuf().size() == 0);
 
-    conn.socket.async_receive( //
-        conn.buf.prepare(conn.buf.max_size()),
-        [&](const asio::error_code& error, const std::size_t bytes_transferred) {
-            core::CapturingGuard<void()> guard([&]() { conn.buf.consume(bytes_transferred); });
+    conn.AsyncReceive(
+        conn.GetStreambuf().max_size(), [&](const asio::error_code& error, const std::size_t bytes_transferred) {
+            core::CapturingGuard<void()> guard([&]() { conn.GetStreambuf().consume(bytes_transferred); });
 
             if (error) {
                 if (error.value() != asio::error::eof) {
@@ -30,7 +29,7 @@ void DoAsyncReceive(net::Connection& conn) {
             // This stream is unterminated
             LOG_MESSAGE_F(debug, "%llu Received %llu bytes", conn.id, bytes_transferred);
 
-            const auto* bytes = asio::buffer_cast<const net::ByteVector::value_type*>(conn.buf.data());
+            const auto* bytes = asio::buffer_cast<const net::ByteVector::value_type*>(conn.GetStreambuf().data());
 
             try {
                 auto& out_file = conn.OpenOutFile();

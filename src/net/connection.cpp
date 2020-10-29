@@ -37,7 +37,6 @@ std::ofstream& net::ConnectionBase::OpenOutFile() {
 }
 
 void net::ConnectionBase::FinishOutFile() {
-    assert(!outFilePath_.empty()); // BeginOutFiles was not called
     outFile_.close();
 }
 
@@ -69,18 +68,26 @@ std::string net::ConnectionBase::MakeOutFilePath() const {
 
 // ======================================================================
 
-net::Connection::Connection(SocketT&& socket) : socket(std::move(socket)), timer(this->socket.get_executor()) {
+net::Connection::Connection(SocketT&& socket) : socket_(std::move(socket)), timer_(socket_.get_executor()) {
     LOG_MESSAGE_F(
-        info, "Created connection %llu, %s", id, this->socket.remote_endpoint().address().to_string().c_str());
+        info, "Created connection %llu, %s", id, this->socket_.remote_endpoint().address().to_string().c_str());
+}
+
+net::Connection::~Connection() {
+    assert(CanDestruct());
+}
+
+bool net::Connection::CanDestruct() const noexcept {
+    return refCount_ == 0;
 }
 
 void net::Connection::End() noexcept {
     try {
-        if (socket.is_open()) {
+        if (socket_.is_open()) {
             FinishOutFile();
 
-            socket.shutdown(asio::socket_base::shutdown_both);
-            socket.close();
+            socket_.shutdown(asio::socket_base::shutdown_both);
+            socket_.close();
 
             LOG_MESSAGE_F(info, "Connection %llu closed", id);
         }
@@ -94,8 +101,10 @@ void net::Connection::AsyncWrite(
     const ByteVector& msg,
     std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
 
+    IncRefCount();
+
     async_write(
-        socket,
+        socket_,
         asio::buffer(msg),
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
@@ -104,15 +113,19 @@ void net::Connection::AsyncWrite(
             }
 
             callback(error, bytes_transferred);
+
+            DecRefCount();
         });
 }
 
 void net::Connection::AsyncRead(
     const std::size_t n, std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
 
+    IncRefCount();
+
     async_read(
-        socket,
-        buf.prepare(n),
+        socket_,
+        buf_.prepare(n),
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
                 LOG_MESSAGE_F(debug, "Async read ec: %s", error.message().c_str());
@@ -121,5 +134,56 @@ void net::Connection::AsyncRead(
             LOG_MESSAGE_F(debug, "Read %llu bytes", bytes_transferred);
 
             callback(error, bytes_transferred);
+
+            DecRefCount();
         });
+}
+
+void net::Connection::AsyncReceive(
+    const std::size_t n, std::function<void(const asio::error_code& error, std::size_t bytes_transferred)>&& callback) {
+
+    IncRefCount();
+
+    socket_.async_receive(
+        buf_.prepare(n),
+        [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
+            if (error) {
+                LOG_MESSAGE_F(debug, "Async read ec: %s", error.message().c_str());
+            }
+
+            callback(error, bytes_transferred);
+
+            DecRefCount();
+        });
+}
+
+void net::Connection::AsyncWait(std::function<void(const asio::error_code& error)>&& callback) {
+    IncRefCount();
+
+    timer_.async_wait([this, callback{std::move(callback)}](const asio::error_code& error) {
+        if (error) {
+            LOG_MESSAGE_F(debug, "Async wait ec: %s", error.message().c_str());
+        }
+
+        callback(error);
+
+        DecRefCount();
+    });
+}
+
+void net::Connection::IncRefCount() noexcept {
+    refCount_++;
+
+    if (refCount_ == 1) {
+        LOG_MESSAGE_F(debug, "Connection %llu has first reference", id);
+    }
+}
+void net::Connection::DecRefCount() noexcept {
+    assert(refCount_ != 0);
+
+    refCount_--;
+
+    if (refCount_ == 0) {
+        LOG_MESSAGE_F(debug, "Connection %llu has zero references", id);
+    }
 }
