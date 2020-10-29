@@ -14,7 +14,7 @@ namespace hyperion::net
     ///
     /// Sweeps inactive connections
     ///
-    /// Befriends Connections access connections_
+    /// Must befriend Connections to access std::vector connections_
     class ConnectionGc
     {
     public:
