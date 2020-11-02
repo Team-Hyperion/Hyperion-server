@@ -2,19 +2,30 @@
 
 For executing Hyperion **server**.
 
-## Parameters
-
-- **Save path**: Path to save received media. Relative to the working directory, defaults to working directory if unspecified
-
-The parameters above are referenced by this document in angled brackets `<>`. For example: to reference the parameter `Unicorn rainbow` is `<unicorn_rainbow>`.
-
 ## Overview
 
 The compiled binary is designed to be executed from the command line as follows:
 
 ```bash
-[executable_path] <save_path>
+[executable_path] [arguments]
 ```
+
+Where:
+
+- execution_path: Path to hyperion executable
+- arguments: Provided for [parameters](#parameters) referenced within angled brackets `<>` in the following order:
+
+```bash
+<save_path>
+```
+
+For a step by step walkthrough, see [Detailed guide](#detailed-guide).
+
+## Parameters
+
+- **Save path**: Path to save received media. Relative to the working directory, defaults to working directory if unspecified
+
+## Detailed guide
 
 ### Windows
 
@@ -30,8 +41,12 @@ Batch file:
 In a file with the file extension `.bat` placed in the same directory as the executable:
 
 ```bat
-hyperion.exe <save_path>
+hyperion.exe [arguments]
 ```
+
+Where:
+
+- arguments: Provided for [parameters](#parameters) in the order specified in [overview](#overview)
 
 The above allows running the server **without** having to use a command prompt and manually typing in the save path each time.
 
@@ -51,7 +66,11 @@ In a file with the file extension `.sh` placed in the same directory as the exec
 
 ```bash
 #!/bin/bash
-./hyperion <save_path>
+./hyperion [arguments]
 ```
+
+Where:
+
+- arguments: Provided for [parameters](#parameters) in the order specified in [overview](#overview)
 
 The above allows running the server **without** having to use a command prompt and manually typing in the save path each time.
