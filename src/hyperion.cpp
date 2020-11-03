@@ -121,7 +121,7 @@ int main(const int argc, char* argv[]) {
         RunServer(save_path, std::move(net_prop));
     }
     catch (TCLAP::ArgException& e) {
-        LOG_MESSAGE_F(error, "%s for CLI arg: %s", e.error(), e.argId());
+        LOG_MESSAGE_F(error, "%s", e.what());
     }
     catch (std::exception& e) {
         LOG_MESSAGE_F(error, "Error initializing server: %s", e.what());
