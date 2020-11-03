@@ -12,6 +12,8 @@ namespace hyperion::net
     /// Configures server's networking properties
     struct NetProp
     {
+        using PortT = unsigned short;
+
         enum class InternetProtocol
         {
             v4,
@@ -19,7 +21,7 @@ namespace hyperion::net
         };
 
         InternetProtocol netProtocol = InternetProtocol::v4;
-        unsigned short portNum       = 34200;
+        PortT portNum                = 34200;
 
         // Timeouts
         std::chrono::milliseconds toSendServerGreeting{5000};

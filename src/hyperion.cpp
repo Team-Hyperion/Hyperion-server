@@ -84,9 +84,15 @@ int main(const int argc, char* argv[]) {
 
         TCLAP::ValueArg<std::string> outPathArg("o", "output-path", "Path to save received media from clients",
                                                 false, "",
-                                                "string");
+                                                "string",
+                                                cmd);
 
-        cmd.add(outPathArg);
+        TCLAP::ValueArg<net::NetProp::PortT> netPortArg("p", "port", "Networking port to use",
+                                                        false, 34200,
+                                                        "uint",
+                                                        cmd);
+
+        TCLAP::SwitchArg ipv4Switch("", "ipv4", "Use ipv4 protocol, uses ipv6 if false", cmd, false);
 
 
         cmd.parse(argc, argv);
@@ -99,10 +105,20 @@ int main(const int argc, char* argv[]) {
         }
 
         // Networking properties
+        net::NetProp net_prop;
+
+        net_prop.portNum = netPortArg.getValue();
+
+        if (ipv4Switch.getValue()) {
+            net_prop.netProtocol = net::NetProp::InternetProtocol::v4;
+        }
+        else {
+            net_prop.netProtocol = net::NetProp::InternetProtocol::v6;
+        }
 
 
         // Finished parsing command line args, start the server
-        RunServer(save_path, {});
+        RunServer(save_path, std::move(net_prop));
     }
     catch (TCLAP::ArgException& e) {
         LOG_MESSAGE_F(error, "%s for CLI arg: %s", e.error(), e.argId());
