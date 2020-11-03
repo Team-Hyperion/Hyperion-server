@@ -4,6 +4,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <tclap/CmdLine.h>
 #include <thread>
 
 #include "core/crash_handler.h"
@@ -38,7 +39,7 @@ void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data)
     io_context.run();
 }
 
-void RunServer(const std::string& save_path) {
+void RunServer(const std::string& save_path, net::NetProp net_prop) {
     asio::io_context io_context;
 
     media::MediaConfig media_config;
@@ -46,7 +47,7 @@ void RunServer(const std::string& save_path) {
 
     LOG_MESSAGE_F(info, "Save directory: %s", media_config.mediaSavePath.c_str());
 
-    net::NetData net_data({}, std::move(media_config)); // Requires io_context to destruct
+    net::NetData net_data(std::move(net_prop), std::move(media_config)); // Requires io_context to destruct
 
 
     auto conn_services = std::thread(&RunConnectionServices, std::ref(io_context), std::ref(net_data));
@@ -78,13 +79,37 @@ int main(const int argc, char* argv[]) {
     LOG_MESSAGE_F(info, "%s | %s build, version: %s\n\n", HYPERION_BUILD_TARGET_PLATFORM, BUILD_TYPE, HYPERION_VERSION);
 
 
-    // Initialize server
-    std::string save_path;
-    if (argc >= 2) {
-        save_path = argv[1];
-        save_path.push_back('/');
+    try {
+        TCLAP::CmdLine cmd("https://github.com/Team-Hyperion/Hyperion-server", ' ', HYPERION_VERSION);
+
+        TCLAP::ValueArg<std::string> outPathArg("o", "output-path", "Path to save received media from clients",
+                                                false, "",
+                                                "string");
+
+        cmd.add(outPathArg);
+
+
+        cmd.parse(argc, argv);
+
+
+        // Media save path
+        std::string save_path = outPathArg.getValue();
+        if (!save_path.empty()) {
+            save_path.push_back('/');
+        }
+
+        // Networking properties
+
+
+        // Finished parsing command line args, start the server
+        RunServer(save_path, {});
     }
-    RunServer(save_path);
+    catch (TCLAP::ArgException& e) {
+        LOG_MESSAGE_F(error, "%s for CLI arg: %s", e.error(), e.argId());
+    }
+    catch (std::exception& e) {
+        LOG_MESSAGE_F(error, "Error initializing server: %s", e.what());
+    }
 
 
     LOG_MESSAGE(info, "goodbye!");
