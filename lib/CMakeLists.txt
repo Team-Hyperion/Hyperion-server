@@ -84,6 +84,7 @@ set(HYPERION_LIB_HEADER_FILES
 	${PROJECT_SOURCE_DIR}/lib/StackWalker/Main
 	${PROJECT_SOURCE_DIR}/lib/backward-cpp
 	${PROJECT_SOURCE_DIR}/lib/asio/asio/include
+	${PROJECT_SOURCE_DIR}/lib/tclap/include
 )
 # ======================================== END HEADER files .h
 
