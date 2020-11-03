@@ -26,6 +26,7 @@ log_msg("Resolving dependencies...")
 validate_dependency(StackWalker)
 validate_dependency(backward-cpp)
 validate_dependency(asio)
+validate_dependency(tclap)
 
 
 # Ones which need to be built
