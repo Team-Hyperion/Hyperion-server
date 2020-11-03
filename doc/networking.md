@@ -2,12 +2,12 @@
 
 Networking specifications for Hyperion server.
 
-## Summary
+## Defaults
+
+These are configurable with command line arguments, see [running](running.md)
 
 - **Port**: 34200
 - **Protocol**: Ipv4
-
-Note: The ability to change port and protocol will be added in a future update.
 
 Timeouts:
 

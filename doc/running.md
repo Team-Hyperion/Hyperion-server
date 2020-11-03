@@ -13,17 +13,28 @@ The compiled binary is designed to be executed from the command line as follows:
 Where:
 
 - execution_path: Path to hyperion executable
-- arguments: Provided for [parameters](#parameters) referenced within angled brackets `<>` in the following order:
-
-```bash
-<save_path>
-```
+- arguments: Provided for [parameters](#parameters) in any order:
 
 For a step by step walkthrough, see [Detailed guide](#detailed-guide).
 
 ## Parameters
 
-- **Save path**: Path to save received media. Relative to the working directory, defaults to working directory if unspecified
+The following can also be obtained using `-h` or `--help` for the argument.
+
+- **Argument identifier**: **Description**
+- `-o`: **Save path**. Path to save received media. Relative to the working directory, defaults to working directory if unspecified
+- `-p`: **Network port**. Network port to use, defaults to `34200`
+- `--ipv4`: **Use ipv4 network protocol, otherwise ipv6**. If not defined, uses ipv6
+
+For example to specify:
+
+- **Output path**: /hyperion/media
+- **Port**: 34560
+- **ipv4 protocol**
+
+```bash
+-o /hyperion/media -p 34560 --ipv4
+```
 
 ## Detailed guide
 
