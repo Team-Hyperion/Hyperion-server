@@ -122,9 +122,11 @@ int main(const int argc, char* argv[]) {
     }
     catch (TCLAP::ArgException& e) {
         LOG_MESSAGE_F(error, "%s", e.what());
+        return 1;
     }
     catch (std::exception& e) {
         LOG_MESSAGE_F(error, "Error initializing server: %s", e.what());
+        return 2;
     }
 
 
