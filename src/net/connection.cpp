@@ -69,7 +69,7 @@ std::string net::ConnectionBase::MakeOutFilePath() const {
 // ======================================================================
 
 net::Connection::Connection(SocketT&& socket) : socket_(std::move(socket)), timer_(socket_.get_executor()) {
-    assert(socket_.is_open()); // .open should have been called prior
+    assert(socket_.is_open()); // Socket should be open to receive from client
 
     LOG_MESSAGE_F(
         info, "Created connection %llu, %s", id, this->socket_.remote_endpoint().address().to_string().c_str());

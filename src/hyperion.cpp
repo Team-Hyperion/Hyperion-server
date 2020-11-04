@@ -108,6 +108,8 @@ int main(const int argc, char* argv[]) {
 
         // Media save path
         std::string save_path = out_path_arg.getValue();
+
+        // Prevents accessing root directory on UNIX systems if save_path is blank
         if (!save_path.empty()) {
             save_path.push_back('/');
         }
