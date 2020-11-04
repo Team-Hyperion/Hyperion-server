@@ -4,6 +4,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <tclap/CmdLine.h>
 #include <thread>
 
 #include "core/crash_handler.h"
@@ -38,7 +39,22 @@ void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data)
     io_context.run();
 }
 
-void RunServer(const std::string& save_path) {
+///
+/// Commands received from the hyperion executable's terminal
+/// Blocks until next command is received
+void HandleTerminalCommands(net::NetData& net_data) {
+    std::string usr_input;
+    std::getline(std::cin, usr_input);
+
+    if (usr_input == "stop") {
+        net_data.servicesExit = true;
+    }
+    else {
+        LOG_MESSAGE_F(error, "Invalid command %s", usr_input.c_str());
+    }
+}
+
+void RunServer(const std::string& save_path, const net::NetProp& net_prop) {
     asio::io_context io_context;
 
     media::MediaConfig media_config;
@@ -46,19 +62,16 @@ void RunServer(const std::string& save_path) {
 
     LOG_MESSAGE_F(info, "Save directory: %s", media_config.mediaSavePath.c_str());
 
-    net::NetData net_data({}, std::move(media_config)); // Requires io_context to destruct
+    net::NetData net_data(net_prop, std::move(media_config)); // Requires io_context to destruct
 
 
     auto conn_services = std::thread(&RunConnectionServices, std::ref(io_context), std::ref(net_data));
 
-    // Stop the server with user input "stop"
-    std::string usr_input;
-    while (usr_input != "stop") {
-        std::cin >> usr_input;
+    while (!net_data.servicesExit) {
+        HandleTerminalCommands(net_data);
     }
 
     LOG_MESSAGE(info, "Stopping server");
-    net_data.servicesExit = true;
     io_context.stop();
 
     conn_services.join();
@@ -78,13 +91,53 @@ int main(const int argc, char* argv[]) {
     LOG_MESSAGE_F(info, "%s | %s build, version: %s\n\n", HYPERION_BUILD_TARGET_PLATFORM, BUILD_TYPE, HYPERION_VERSION);
 
 
-    // Initialize server
-    std::string save_path;
-    if (argc >= 2) {
-        save_path = argv[1];
-        save_path.push_back('/');
+    try {
+        TCLAP::CmdLine cmd("https://github.com/Team-Hyperion/Hyperion-server", ' ', HYPERION_VERSION);
+
+        TCLAP::ValueArg<std::string> out_path_arg(
+            "o", "output-path", "Path to save received media from clients", false, "", "string", cmd);
+
+        TCLAP::ValueArg<net::NetProp::PortT> net_port_arg(
+            "p", "port", "Networking port to use", false, 34200, "uint", cmd);
+
+        TCLAP::SwitchArg ipv4_switch("", "ipv4", "Use ipv4 protocol, uses ipv6 if false", cmd, false);
+
+
+        cmd.parse(argc, argv);
+
+
+        // Media save path
+        std::string save_path = out_path_arg.getValue();
+
+        // Prevents accessing root directory on UNIX systems if save_path is blank
+        if (!save_path.empty()) {
+            save_path.push_back('/');
+        }
+
+        // Networking properties
+        net::NetProp net_prop;
+
+        net_prop.portNum = net_port_arg.getValue();
+
+        if (ipv4_switch.getValue()) {
+            net_prop.netProtocol = net::NetProp::InternetProtocol::v4;
+        }
+        else {
+            net_prop.netProtocol = net::NetProp::InternetProtocol::v6;
+        }
+
+
+        // Finished parsing command line args, start the server
+        RunServer(save_path, net_prop);
     }
-    RunServer(save_path);
+    catch (TCLAP::ArgException& e) {
+        LOG_MESSAGE_F(error, "%s", e.what());
+        return 1;
+    }
+    catch (std::exception& e) {
+        LOG_MESSAGE_F(error, "Error initializing server: %s", e.what());
+        return 2;
+    }
 
 
     LOG_MESSAGE(info, "goodbye!");
