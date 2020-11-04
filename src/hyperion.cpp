@@ -39,6 +39,21 @@ void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data)
     io_context.run();
 }
 
+///
+/// Commands received from the hyperion executable's terminal
+/// Blocks until next command is received
+void HandleTerminalCommands(net::NetData& net_data) {
+    std::string usr_input;
+    std::getline(std::cin, usr_input);
+
+    if (usr_input == "stop") {
+        net_data.servicesExit = true;
+    }
+    else {
+        LOG_MESSAGE_F(error, "Invalid command %s", usr_input.c_str());
+    }
+}
+
 void RunServer(const std::string& save_path, const net::NetProp& net_prop) {
     asio::io_context io_context;
 
@@ -52,14 +67,11 @@ void RunServer(const std::string& save_path, const net::NetProp& net_prop) {
 
     auto conn_services = std::thread(&RunConnectionServices, std::ref(io_context), std::ref(net_data));
 
-    // Stop the server with user input "stop"
-    std::string usr_input;
-    while (usr_input != "stop") {
-        std::cin >> usr_input;
+    while (!net_data.servicesExit) {
+        HandleTerminalCommands(net_data);
     }
 
     LOG_MESSAGE(info, "Stopping server");
-    net_data.servicesExit = true;
     io_context.stop();
 
     conn_services.join();
