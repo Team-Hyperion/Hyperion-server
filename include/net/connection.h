@@ -157,6 +157,10 @@ namespace hyperion::net
         asio::steady_timer timer_;
 
 
+        /// If a EOF was received, it means the client has closed the connection
+        bool receivedEof_ = false;
+
+
         // For tracking async operations
 
         ///

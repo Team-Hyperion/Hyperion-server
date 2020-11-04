@@ -69,6 +69,8 @@ std::string net::ConnectionBase::MakeOutFilePath() const {
 // ======================================================================
 
 net::Connection::Connection(SocketT&& socket) : socket_(std::move(socket)), timer_(socket_.get_executor()) {
+    assert(socket_.is_open()); // .open should have been called prior
+
     LOG_MESSAGE_F(
         info, "Created connection %llu, %s", id, this->socket_.remote_endpoint().address().to_string().c_str());
 }
@@ -83,14 +85,19 @@ bool net::Connection::CanDestruct() const noexcept {
 
 void net::Connection::End() noexcept {
     try {
-        if (socket_.is_open()) {
-            FinishOutFile();
+        FinishOutFile();
 
+        if (!receivedEof_) { // Suppresses exception when attempting to shutdown already disconnected socket
+            LOG_MESSAGE(debug, "Calling shutdown on connected socket");
             socket_.shutdown(asio::socket_base::shutdown_both);
-            socket_.close();
-
-            LOG_MESSAGE_F(info, "Connection %llu closed", id);
         }
+        else {
+            LOG_MESSAGE(debug, "Skipping shutdown on disconnected socket");
+        }
+
+        socket_.close();
+
+        LOG_MESSAGE_F(info, "Connection %llu closed", id);
     }
     catch (std::exception& e_close) {
         LOG_MESSAGE_F(error, "Failed to close socket: %s", e_close.what());
@@ -148,6 +155,10 @@ void net::Connection::AsyncReceive(
         buf_.prepare(n),
         [this, callback{std::move(callback)}](const asio::error_code& error, const std::size_t bytes_transferred) {
             if (error) {
+                if (error.value() == asio::error::eof) {
+                    receivedEof_ = true;
+                }
+
                 LOG_MESSAGE_F(debug, "Async read ec: %s", error.message().c_str());
             }
 
