@@ -15,6 +15,8 @@ Where:
 - execution_path: Path to hyperion executable
 - arguments: Provided for [parameters](#parameters) in any order:
 
+To stop hyperion, type `stop` into the hyperion executable and press enter.
+
 For a step by step walkthrough, see [Detailed guide](#detailed-guide).
 
 ## Parameters
