@@ -39,7 +39,7 @@ void RunConnectionServices(asio::io_context& io_context, net::NetData& net_data)
     io_context.run();
 }
 
-void RunServer(const std::string& save_path, net::NetProp net_prop) {
+void RunServer(const std::string& save_path, const net::NetProp& net_prop) {
     asio::io_context io_context;
 
     media::MediaConfig media_config;
@@ -47,7 +47,7 @@ void RunServer(const std::string& save_path, net::NetProp net_prop) {
 
     LOG_MESSAGE_F(info, "Save directory: %s", media_config.mediaSavePath.c_str());
 
-    net::NetData net_data(std::move(net_prop), std::move(media_config)); // Requires io_context to destruct
+    net::NetData net_data(net_prop, std::move(media_config)); // Requires io_context to destruct
 
 
     auto conn_services = std::thread(&RunConnectionServices, std::ref(io_context), std::ref(net_data));
@@ -82,24 +82,20 @@ int main(const int argc, char* argv[]) {
     try {
         TCLAP::CmdLine cmd("https://github.com/Team-Hyperion/Hyperion-server", ' ', HYPERION_VERSION);
 
-        TCLAP::ValueArg<std::string> outPathArg("o", "output-path", "Path to save received media from clients",
-                                                false, "",
-                                                "string",
-                                                cmd);
+        TCLAP::ValueArg<std::string> out_path_arg(
+            "o", "output-path", "Path to save received media from clients", false, "", "string", cmd);
 
-        TCLAP::ValueArg<net::NetProp::PortT> netPortArg("p", "port", "Networking port to use",
-                                                        false, 34200,
-                                                        "uint",
-                                                        cmd);
+        TCLAP::ValueArg<net::NetProp::PortT> net_port_arg(
+            "p", "port", "Networking port to use", false, 34200, "uint", cmd);
 
-        TCLAP::SwitchArg ipv4Switch("", "ipv4", "Use ipv4 protocol, uses ipv6 if false", cmd, false);
+        TCLAP::SwitchArg ipv4_switch("", "ipv4", "Use ipv4 protocol, uses ipv6 if false", cmd, false);
 
 
         cmd.parse(argc, argv);
 
 
         // Media save path
-        std::string save_path = outPathArg.getValue();
+        std::string save_path = out_path_arg.getValue();
         if (!save_path.empty()) {
             save_path.push_back('/');
         }
@@ -107,9 +103,9 @@ int main(const int argc, char* argv[]) {
         // Networking properties
         net::NetProp net_prop;
 
-        net_prop.portNum = netPortArg.getValue();
+        net_prop.portNum = net_port_arg.getValue();
 
-        if (ipv4Switch.getValue()) {
+        if (ipv4_switch.getValue()) {
             net_prop.netProtocol = net::NetProp::InternetProtocol::v4;
         }
         else {
@@ -118,7 +114,7 @@ int main(const int argc, char* argv[]) {
 
 
         // Finished parsing command line args, start the server
-        RunServer(save_path, std::move(net_prop));
+        RunServer(save_path, net_prop);
     }
     catch (TCLAP::ArgException& e) {
         LOG_MESSAGE_F(error, "%s", e.what());
